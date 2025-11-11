@@ -85,6 +85,10 @@ function getCurrentDate() {
   return date.toISOString().split("T")[0]; // YYYY-MM-DD
 }
 
+function resolvePaymentEnv(apiUrl) {
+  return apiUrl && apiUrl.includes("sandbox") ? "sandbox" : "production";
+}
+
 // Worker processing function (shared by all workers)
 const paymentWorkerProcessor = async (job) => {
   const { givingData } = job.data; // Destructure jobId
@@ -104,7 +108,9 @@ const paymentWorkerProcessor = async (job) => {
       givingData.company,
       givingData.taxid,
       givingData.note,
-      givingData.tpTradeID
+      givingData.tpTradeID,
+      givingData.isSuccess,
+      givingData.env
     );
 
     return { success: true }; // Return the response
@@ -172,6 +178,8 @@ const givingController = {
       company: cardholder.company || "",
       taxid: cardholder.taxid || "",
       note: cardholder.note || "",
+      isSuccess: false,
+      env: resolvePaymentEnv(TAPPAY_API),
     };
 
     try {
@@ -193,6 +201,7 @@ const givingController = {
 
       // Add rec_trade_id to the data store into DB
       givingData.tpTradeID = externalResponse.rec_trade_id;
+      givingData.isSuccess = true;
 
       // Add a job to the queue to store into DB
       const job = await paymentQueue.add(

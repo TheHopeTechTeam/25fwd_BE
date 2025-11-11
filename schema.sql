@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS public.confgive (
     taxid         TEXT,
     note          TEXT,
     tp_trade_id   TEXT         NOT NULL,
+    is_success    BOOLEAN      NOT NULL DEFAULT FALSE,
+    env           VARCHAR(16)  NOT NULL DEFAULT 'sandbox' CHECK (env IN ('sandbox','production')),
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
