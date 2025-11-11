@@ -7,6 +7,7 @@ Keep in mind that this repo intentionally stays small—there is no ORM, no migr
 ## How the system hangs together
 - **Entry point (`index.js`)** – boots Express, sessions, JSON parser, CORS, and mounts two routes: `POST /api/payment` and `POST /api/getall`.
 - **Payment controller (`controllers/giving.js`)** – validates incoming payloads, calls TapPay, converts the record into a DB-friendly shape, and enqueues a job on the `tappay-payments` BullMQ queue. Five workers (hardcoded) pull jobs and write rows to Postgres.
+- **Email service (`services/emailService.js` + `emails/givingSuccess.html`)** – once TapPay confirms a payment, the controller asks this module to send an HTML receipt through the Google Workspace mailbox (`noreply@thehope.co`).
 - **Data layer (`models/giving.js` + `db.js`)** – uses `pg` to insert/read from the `confgive` table. Schema definition lives in `schema.sql` so you can recreate the database quickly, including the `is_success` flag and `env` (sandbox/production) columns.
 - **Supporting files** – `stresstest.yaml` (Artillery load scenario), `AGENTS.md` (notes), and `package.json` for dependencies/scripts.
 
@@ -23,11 +24,24 @@ Keep in mind that this repo intentionally stays small—there is no ORM, no migr
 - Number of workers: hardcoded to 5 in `controllers/giving.js` (`WORKERS` env is validated but not yet wired in code).
 - Payload stored per job: one `givingData` object with the cardholder fields plus TapPay response metadata.
 
+### Email notifications
+- Transport: Gmail SMTP (Workspace account `noreply@thehope.co`) authenticated with a 2FA-protected App Password, so there is no OAuth refresh token to refresh.
+- Template + subject: `emails/givingSuccess.html` is checked into the repo; edit it directly when you get the final copy. The file supports `{{name}}`, `{{amount}}`, `{{currency}}`, `{{date}}`, `{{banner}}`, and lets you define the email subject by adding a top-of-file comment such as `<!-- subject: 感謝您支持 The Hope -->`.
+- Banner: point `GIVING_EMAIL_BANNER_PATH` to a local image; it gets attached and referenced in the HTML template through `cid:giving-banner`. If the placeholder `{{banner}}` is omitted, the banner is prepended automatically.
+- Execution point: after TapPay returns `status === 0` and the job is queued, `sendGivingSuccessEmail` fires asynchronously. Missing env vars or recipient email simply skips the send without breaking the payment flow.
+
+#### Gmail App Password checklist
+1. In the Workspace admin console, make sure IMAP/SMTP is enabled for `noreply@thehope.co`.
+2. Sign in as that mailbox, enable 2-Step Verification, then issue an App Password (choose “Mail” + “Other (Custom name)” to label it for this API).
+3. Store the mailbox and generated password in `.env` as `GOOGLE_SENDER_EMAIL` and `GOOGLE_APP_PASSWORD`.
+4. Point `GIVING_EMAIL_BANNER_PATH` to the banner asset and edit `emails/givingSuccess.html` once the final title/body arrive.
+
 ## Prerequisites
 - **Node.js 18+ / npm 9+** – runtime for Express + BullMQ.
 - **Redis 6+** – required for the BullMQ queue (`REDIS_URL`).
 - **PostgreSQL 13+** – provides the `confgive` table (see `schema.sql`).
 - **TapPay credentials** – `PARTNER_KEY`, `MERCHANT_ID`, and the REST endpoint (`TAPPAY_API`) pointing to sandbox or production.
+- **Google Workspace mailbox** – enable 2-Step Verification on `noreply@thehope.co`, generate a Gmail App Password, and keep it alongside the sender address so the SMTP transport can authenticate.
 
 ## Environment variables
 Create a `.env` in the repo root before starting the app. The controller throws during startup if any item in this list is missing.
@@ -49,6 +63,9 @@ Create a `.env` in the repo root before starting the app. The controller throws 
 | `HOST` | PostgreSQL host. |
 | `PGPORT` | PostgreSQL port, default `5432`. |
 | `DATABASE` | PostgreSQL database containing `confgive`. |
+| `GOOGLE_SENDER_EMAIL` | The actual Workspace mailbox (e.g., `noreply@thehope.co`). |
+| `GOOGLE_APP_PASSWORD` | App Password generated for that mailbox (requires 2FA). |
+| `GIVING_EMAIL_BANNER_PATH` | Optional – absolute/relative path to the banner image the email service should inline. |
 
 Example template:
 ```env
@@ -67,6 +84,9 @@ PASSWORD=postgres
 HOST=127.0.0.1
 PGPORT=5432
 DATABASE=giving
+GOOGLE_SENDER_EMAIL=noreply@thehope.co
+GOOGLE_APP_PASSWORD=abcd efgh ijkl mnop
+GIVING_EMAIL_BANNER_PATH=./assets/banner.png
 ```
 
 ## Database schema & migrations
@@ -102,11 +122,12 @@ Rerun `schema.sql` afterwards to catch any other drift and keep the index (`conf
    npm start
    ```
 4. Watch the console for `server listening on port: <PORT>`. BullMQ workers also log job progress/completions.
+5. (Email) Once the API is online, hit the health flow with a test payment that includes `cardholder.email`. The console logs `emailService` messages showing whether the SMTP transport authenticated and if the email was dispatched.
 
 ## Endpoints you can call
 - `POST /api/payment`
   - Body: `{ prime, amount, cardholder }`, where `cardholder` includes `phoneCode`, `phone_number`, `name`, `email`, optional receipt metadata, etc.
-  - Behavior: Calls TapPay immediately; queues a DB write only when `status === 0`. Errors during TapPay surface as HTTP 500 with `Failed to add payment to processing queue.`
+  - Behavior: Calls TapPay immediately; queues a DB write only when `status === 0`. The email service also triggers here (best-effort) to send an HTML receipt via Gmail. Errors during TapPay surface as HTTP 500 with `Failed to add payment to processing queue.`
 - `POST /api/getall`
   - Body: `{ googleSecret, lastRowID }`.
   - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`. Pass `0` to fetch everything.

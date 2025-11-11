@@ -1,5 +1,6 @@
 const axios = require("axios");
 const givingModel = require("../models/giving");
+const { sendGivingSuccessEmail } = require("../services/emailService");
 
 const {
   PARTNER_KEY,
@@ -215,6 +216,20 @@ const givingController = {
       );
 
       console.log(`Job ${job.id} added to queue for processing.`);
+
+      if (cardholder.email) {
+        sendGivingSuccessEmail({
+          recipient: cardholder.email,
+          templateContext: {
+            name: cardholder.name || "家人",
+            amount,
+            currency: givingData.currency,
+            date: givingData.date,
+          },
+        }).catch((error) => {
+          console.error("Failed to dispatch giving confirmation email", error);
+        });
+      }
     } catch (error) {
       console.error("Error adding job to payment queue:", error);
       res
