@@ -109,6 +109,7 @@ const paymentWorkerProcessor = async (job) => {
       givingData.company,
       givingData.taxid,
       givingData.note,
+      givingData.campus,
       givingData.tpTradeID,
       givingData.isSuccess,
       givingData.env
@@ -179,6 +180,7 @@ const givingController = {
       company: cardholder.company || "",
       taxid: cardholder.taxid || "",
       note: cardholder.note || "",
+      campus: cardholder.campus || "",
       isSuccess: false,
       env: resolvePaymentEnv(TAPPAY_API),
     };

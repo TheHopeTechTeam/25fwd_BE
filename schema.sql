@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.confgive (
     company       TEXT,
     taxid         TEXT,
     note          TEXT,
+    campus        TEXT,
     tp_trade_id   TEXT         NOT NULL,
     is_success    BOOLEAN      NOT NULL DEFAULT FALSE,
     env           VARCHAR(16)  NOT NULL DEFAULT 'sandbox' CHECK (env IN ('sandbox','production')),
@@ -24,5 +25,8 @@ CREATE TABLE IF NOT EXISTS public.confgive (
 
 -- 你原本像是想建索引；這裡補成可執行的語法
 CREATE INDEX IF NOT EXISTS confgive_tp_trade_id_idx ON public.confgive (tp_trade_id);
+
+ALTER TABLE public.confgive
+  ADD COLUMN IF NOT EXISTS campus TEXT;
 
 COMMIT;

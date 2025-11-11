@@ -16,13 +16,14 @@ const givingModel = {
     company,
     taxid,
     note,
+    campus,
     tpTradeID,
     isSuccess,
     env
   ) => {
     try {
       await pool.query(
-        `INSERT INTO confgive (name, amount, currency, date, phone_number, email, receipt, paymentType, upload, receiptName, nationalid, company, taxid, note, tp_trade_id, is_success, env) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+        `INSERT INTO confgive (name, amount, currency, date, phone_number, email, receipt, paymentType, upload, receiptName, nationalid, company, taxid, note, campus, tp_trade_id, is_success, env) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
         [
           name,
           amount,
@@ -38,6 +39,7 @@ const givingModel = {
           company,
           taxid,
           note,
+          campus,
           tpTradeID,
           isSuccess,
           env,
