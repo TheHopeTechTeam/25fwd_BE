@@ -5,11 +5,7 @@ const nodemailer = require("nodemailer");
 const { GOOGLE_SENDER_EMAIL, GOOGLE_APP_PASSWORD, GIVING_EMAIL_BANNER_PATH } =
   process.env;
 
-const REQUIRED_ENV_VARS = [
-  "GOOGLE_SENDER_EMAIL",
-  "GOOGLE_APP_PASSWORD",
-  "GIVING_EMAIL_BANNER_PATH",
-];
+const REQUIRED_ENV_VARS = ["GOOGLE_SENDER_EMAIL", "GOOGLE_APP_PASSWORD"];
 
 const DEFAULT_SUBJECT =
   "感謝你的慷慨參與 — 因著你的奉獻，我們一起贏得城市的 1%";
@@ -66,7 +62,7 @@ function loadTemplate() {
       error.message
     );
     cachedTemplate = {
-      html: "<p>Thank you for your donation.</p>",
+      html: "<p>感謝你在這個 FORWARD 季節中的慷慨參與。</p>",
       subject: DEFAULT_SUBJECT,
     };
     return cachedTemplate;

@@ -218,13 +218,13 @@ const givingController = {
       console.log(`Job ${job.id} added to queue for processing.`);
 
       if (cardholder.email) {
+        const nameForGreeting = (cardholder.receiptName || "").trim();
+        const greeting = nameForGreeting || "家人";
+
         sendGivingSuccessEmail({
           recipient: cardholder.email,
           templateContext: {
-            name: cardholder.name || "家人",
-            amount,
-            currency: givingData.currency,
-            date: givingData.date,
+            greeting,
           },
         }).catch((error) => {
           console.error("Failed to dispatch giving confirmation email", error);
