@@ -52,7 +52,7 @@ const givingModel = {
   get: async (lastRowID) => {
     try {
       const res = await pool.query(
-        "SELECT * FROM confgive WHERE id > $1 ORDER BY id",
+        "SELECT * FROM confgive WHERE id > $1 AND env = 'production' ORDER BY id",
         [lastRowID]
       );
       return res.rows;
