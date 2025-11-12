@@ -227,6 +227,8 @@ const givingController = {
           recipient: cardholder.email,
           templateContext: {
             greeting,
+            paymentType,
+            amount,
           },
         }).catch((error) => {
           console.error("Failed to dispatch giving confirmation email", error);
