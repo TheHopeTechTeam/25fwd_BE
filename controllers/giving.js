@@ -227,7 +227,7 @@ const givingController = {
           recipient: cardholder.email,
           templateContext: {
             greeting,
-            paymentType: cardholder.paymentType,
+            paymentType: convertPaymentType(cardholder.paymentType),
             amount,
           },
         }).catch((error) => {
@@ -263,5 +263,9 @@ const givingController = {
     }
   },
 };
+
+function convertPaymentType(rawPaymentType) {
+  return rawPaymentType.split("_").join(" ").toUpperCase();
+}
 
 module.exports = givingController;
