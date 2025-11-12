@@ -227,7 +227,7 @@ const givingController = {
           recipient: cardholder.email,
           templateContext: {
             greeting,
-            paymentType,
+            paymentType: cardholder.paymentType,
             amount,
           },
         }).catch((error) => {
