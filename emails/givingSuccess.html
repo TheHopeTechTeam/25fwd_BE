@@ -1,11 +1,173 @@
 <!-- subject: 感謝你在 FORWARD 季節中的慷慨參與 -->
-{{banner}}
-<section style="font-family: 'Noto Sans TC', Arial, sans-serif; line-height: 1.8; color: #1f2933; padding: 24px;">
-  <p style="margin-bottom: 16px;">親愛的 {{greeting}}，你好：</p>
-  <p style="margin-bottom: 16px;">感謝你在這個 FORWARD 季節中的慷慨參與。你的擺上不只是財務上的給予，更是向神表達信心與敬拜。</p>
-  <p style="margin-bottom: 16px;">年終奉獻收據將於明年一月開立，屆時可於「電子收據下載」頁面取得。</p>
-  <p style="margin-bottom: 16px;">因著你的參與 The Hope 得以持續建造神的家，將福音與盼望帶進更多人的生命中，並一起贏得我們所在城市的 1%。</p>
-  <p style="margin-bottom: 16px;">期待在 HOPE 主日與你相見！</p>
-  <p style="margin-bottom: 16px;">如有任何問題，歡迎來信讓我們知道： give@thehope.co </p>
-  <p style="margin-bottom: 0;">The Hope</p>
-</section>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f6f4ef;
+        font-family: 'Noto Sans TC', 'Microsoft JhengHei', Arial, sans-serif;
+        color: #0f172a;
+      }
+      .email-wrapper {
+        padding: 32px 16px;
+      }
+      .card {
+        max-width: 640px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 16px 48px rgba(15, 23, 42, 0.15);
+      }
+      .hero {
+        background: #3c5464;
+        color: #f8fafc;
+        padding: 32px;
+        text-align: center;
+      }
+      .hero h1 {
+        margin: 16px 0 0;
+        font-size: 22px;
+        letter-spacing: 0.8px;
+      }
+      .divider {
+        height: 1px;
+        background: #e2e8f0;
+        margin: 0 32px;
+      }
+      .content {
+        padding: 32px;
+        line-height: 1.9;
+      }
+      .summary-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+      }
+      .summary-title {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: #0f172a;
+        font-weight: 600;
+      }
+      .summary-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .summary-table th,
+      .summary-table td {
+        padding: 10px 0;
+        text-align: left;
+        font-size: 15px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .summary-table th {
+        width: 35%;
+        color: #475569;
+        font-weight: 500;
+      }
+      .summary-table tr:last-child th,
+      .summary-table tr:last-child td {
+        border-bottom: none;
+      }
+      .value {
+        font-weight: 600;
+        color: #0f172a;
+        display: inline-block;
+        min-width: 24px;
+      }
+      .value:empty::after {
+        content: '—';
+        color: #94a3b8;
+        font-weight: 400;
+      }
+      p {
+        margin: 0 0 16px;
+      }
+      .footer {
+        background: #3c5464;
+        color: #e2e8f0;
+        padding: 24px 32px;
+        text-align: center;
+      }
+      .footer a {
+        color: #fcd34d;
+        text-decoration: none;
+      }
+      @media (max-width: 480px) {
+        .card {
+          border-radius: 16px;
+        }
+        .hero,
+        .content,
+        .footer {
+          padding: 24px;
+        }
+        .divider {
+          margin: 0 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-wrapper">
+      <div class="card">
+        <div class="hero">
+          <img
+            src="https://25fwd.thehope.app/images/Logo.png"
+            alt="FORWARD"
+            title="FORWARD"
+            style="
+              display: block;
+              margin: 16px auto;
+              max-width: 200px;
+              width: 100%;
+              height: auto;
+              font-family: 'Gotham Black', 'Arial Black', sans-serif;
+              text-transform: uppercase;
+              letter-spacing: 6px;
+              font-size: 28px;
+              color: #fdf1af;
+            "
+          />
+        </div>
+        <div class="divider"></div>
+        <div class="content">
+          <p>親愛的 {{greeting}}，你好：</p>
+          <p>感謝你在這個 FORWARD 季節中的慷慨參與。你的擺上不只是財務上的給予，更是向神表達信心與敬拜。</p>
+          <p>年終奉獻收據將於明年一月開立，屆時可於「電子收據下載」頁面取得。</p>
+          <p>因著你的參與 The Hope 得以持續建造神的家，將福音與盼望帶進更多人的生命中，並一起贏得我們所在城市的 1%。</p>
+          <p>期待在 HOPE 主日與你相見！</p>
+          <p>如有任何問題，歡迎來信讓我們知道： <a href="mailto:give@thehope.co"> give@thehope.co </a> </p>
+
+          <div class="summary-card">
+            <p class="summary-title">奉獻明細</p>
+            <table class="summary-table" role="presentation">
+              <tr>
+                <th>奉獻金額</th>
+                <td><span class="value">{{amountDisplay}}</span></td>
+              </tr>
+              <tr>
+                <th>奉獻方式</th>
+                <td><span class="value">{{paymentMethod}}</span></td>
+              </tr>
+              <tr>
+                <th>奉獻日期</th>
+                <td><span class="value">{{givingDate}}</span></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        <div class="footer">
+          <p style="margin: 0; font-size: 13px; color: #fdf1af;"> <a href="https://24report.thehope.tw">點擊查看 2024 年度報告</a>，你的慷慨正在影響許多人的生命</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
