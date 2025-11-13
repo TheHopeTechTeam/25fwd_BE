@@ -26,7 +26,8 @@ Keep in mind that this repo intentionally stays small—there is no ORM, no migr
 
 ### Email notifications
 - Transport: Gmail SMTP (Workspace account `noreply@thehope.co`) authenticated with a 2FA-protected App Password, so there is no OAuth refresh token to refresh.
-- Template + subject: `emails/givingSuccess.html` is checked into the repo; edit it directly when you get the final copy. The file only interpolates `{{greeting}}` (either the donor's name or “家人”) plus the optional `{{banner}}` block. Set the email subject by adding a top-of-file comment such as `<!-- subject: 感謝你在 FORWARD 季節中的慷慨參與 -->`.
+- Template + subject: `emails/givingSuccess.html` is checked into the repo; edit it directly when you get the final copy. Set the email subject by adding a top-of-file comment such as `<!-- subject: 感謝你在 FORWARD 季節中的慷慨參與 -->`.
+- Template variables: besides `{{banner}}` and `{{greeting}}`, the refreshed layout expects `{{amountDisplay}}`, `{{paymentMethod}}`, and `{{givingDate}}`. The controller now supplies those automatically using the submitted amount/paymentType and the current date formatted as `YYYY/MM/DD`.
 - Banner: point `GIVING_EMAIL_BANNER_PATH` to a local image; it gets attached and referenced in the HTML template through `cid:giving-banner`. If the placeholder `{{banner}}` is omitted, the banner is prepended automatically.
 - Execution point: after TapPay returns `status === 0` and the job is queued, `sendGivingSuccessEmail` fires asynchronously. Missing env vars or recipient email simply skips the send without breaking the payment flow.
 

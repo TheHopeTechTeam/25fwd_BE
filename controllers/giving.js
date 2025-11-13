@@ -81,13 +81,50 @@ async function tapPayPayment(phoneNumber, prime, amount, cardholder) {
   }
 }
 
+const taipeiDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Taipei",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 function getCurrentDate() {
-  const date = new Date();
-  return date.toISOString().split("T")[0]; // YYYY-MM-DD
+  return taipeiDateFormatter.format(new Date());
 }
 
 function resolvePaymentEnv(apiUrl) {
   return apiUrl && apiUrl.includes("sandbox") ? "sandbox" : "production";
+}
+
+function formatCurrencyDisplay(rawAmount, currencyCode = "TWD") {
+  const amountNumber = Number(rawAmount);
+  if (!Number.isFinite(amountNumber)) {
+    return "";
+  }
+
+  try {
+    return new Intl.NumberFormat("zh-TW", {
+      style: "currency",
+      currency: currencyCode,
+      maximumFractionDigits: 0,
+    }).format(amountNumber);
+  } catch (error) {
+    return `${currencyCode} ${amountNumber}`;
+  }
+}
+
+function formatDisplayDate(dateString) {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
+  if (year && month && day) {
+    return `${year}/${month}/${day}`;
+  }
+  return dateString;
+}
+
+function formatPaymentMethod(method) {
+  if (!method || typeof method !== "string") return "";
+  return method.split("_").join(" ").toUpperCase();
 }
 
 // Worker processing function (shared by all workers)
@@ -222,13 +259,19 @@ const givingController = {
       if (cardholder.email) {
         const nameForGreeting = (cardholder.receiptName || "").trim();
         const greeting = nameForGreeting || "家人";
+        const amountDisplay = formatCurrencyDisplay(amount, CURRENCY);
+        const givingDateDisplay = formatDisplayDate(givingData.date);
+        const formattedPaymentMethod = formatPaymentMethod(
+          cardholder.paymentType
+        );
 
         sendGivingSuccessEmail({
           recipient: cardholder.email,
           templateContext: {
             greeting,
-            paymentType: convertPaymentType(cardholder.paymentType),
-            amount,
+            amountDisplay,
+            paymentMethod: formattedPaymentMethod,
+            givingDate: givingDateDisplay,
           },
         }).catch((error) => {
           console.error("Failed to dispatch giving confirmation email", error);
