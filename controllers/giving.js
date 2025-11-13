@@ -307,4 +307,8 @@ const givingController = {
   },
 };
 
+function convertPaymentType(rawPaymentType) {
+  return rawPaymentType.split("_").join(" ").toUpperCase();
+}
+
 module.exports = givingController;
