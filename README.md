@@ -16,7 +16,7 @@ Keep in mind that this repo intentionally stays small—there is no ORM, no migr
 2. Controller builds TapPay request: partner key, merchant ID, amount, currency, and combines `phoneCode` + `phone_number` for the `details` string.
 3. TapPay response is returned immediately to the client. Only records with `status === 0` are persisted.
 4. Successful responses yield a job containing the structured donation record (now including `campus`) plus `rec_trade_id`, `is_success`, and the detected environment (`sandbox` when the TapPay API URL contains `sandbox`, otherwise `production`). BullMQ workers consume the job and call `givingModel.add`, which inserts into `confgive`.
-5. External systems poll `POST /api/getall` with `{ googleSecret, lastRowID }`. When the secret matches `GOOGLE_SECRET`, the API streams every row with `id > lastRowID`.
+5. External systems poll `POST /api/getall` with `{ googleSecret, lastRowID }`. When the secret matches `GOOGLE_SECRET`, the API streams every row with `id > lastRowID`, `env = 'production'`, and `amount > 1`.
 
 ### Queue/worker specifics
 - Queue name: `tappay-payments` (BullMQ). Redis connection string set with `REDIS_URL`.
@@ -131,7 +131,7 @@ Rerun `schema.sql` afterwards to catch any other drift and keep the index (`conf
   - Behavior: Calls TapPay immediately; queues a DB write only when `status === 0`. The email service also triggers here (best-effort) to send an HTML receipt via Gmail. Errors during TapPay surface as HTTP 500 with `Failed to add payment to processing queue.`
 - `POST /api/getall`
   - Body: `{ googleSecret, lastRowID }`.
-  - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`. Pass `0` to fetch everything.
+  - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`, filtered to rows where `env = 'production'` and `amount > 1`. Pass `0` to fetch everything that matches those conditions.
 
 ## Troubleshooting
 - **`column "is_success" of relation "confgive" does not exist`** – The code inserts into `is_success`, but your table predates the column. Add the column manually using the SQL snippet above or drop/recreate the table via `schema.sql`.
