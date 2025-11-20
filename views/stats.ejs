@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Giving Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4A90E2",
+                        "background-light": "#F4F7FA",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white">
+    <div class="flex min-h-screen">
+        <main class="flex-1 p-8 overflow-y-auto w-full">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap justify-between gap-3 mb-8">
+                    <div class="flex flex-col gap-2">
+                        <p class="text-3xl font-bold leading-tight tracking-tight">Giving Dashboard</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">An overview
+                            of key giving metrics.</p>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div
+                        class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-slate-600 dark:text-slate-300 text-base font-medium leading-normal">Total Giving
+                        </p>
+                        <p class="tracking-tight text-4xl font-bold leading-tight" id="total-giving">$0</p>
+                    </div>
+                    <div
+                        class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-slate-600 dark:text-slate-300 text-base font-medium leading-normal">Total Givers
+                        </p>
+                        <p class="tracking-tight text-4xl font-bold leading-tight" id="total-count">0</p>
+                    </div>
+                </div>
+
+                <!-- Campus Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div
+                        class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-lg font-bold">Giving Sum by Campus</p>
+                        <div class="h-64">
+                            <canvas id="campusSumChart"></canvas>
+                        </div>
+                    </div>
+                    <div
+                        class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-lg font-bold">Giving Count by Campus</p>
+                        <div class="h-64">
+                            <canvas id="campusCountChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weekly Trend -->
+                <div class="grid grid-cols-1 gap-8">
+                    <div
+                        class="rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-lg font-bold mb-1">Weekly Giving Trend</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">Nov 2025 - Jan 2026</p>
+                        <div class="h-80 w-full">
+                            <canvas id="weeklyTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div
+                        class="overflow-x-auto rounded-xl bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <table class="w-full text-left">
+                            <thead
+                                class="bg-slate-50 dark:bg-slate-800 text-xs text-slate-500 dark:text-slate-400 uppercase">
+                                <tr>
+                                    <th class="px-6 py-3" scope="col">Week Period</th>
+                                    <th class="px-6 py-3 text-right" scope="col">Giving Amount</th>
+                                    <th class="px-6 py-3 text-right" scope="col">Giving Count</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm text-slate-700 dark:text-slate-300" id="period-table-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script id="server-data" type="application/json">
+        <%- JSON.stringify(data) %>
+    </script>
+    <script>
+        // Inject data from server
+        const rawData = JSON.parse(document.getElementById('server-data').textContent);
+
+        // Helper to format currency
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(amount);
+        };
+
+        // Helper to determine period
+        const getPeriod = (dateStr) => {
+            // dateStr is likely YYYY-MM-DD or ISO string. 
+            // Assuming dateStr is sortable string YYYY-MM-DD
+            // Or construct Date object.
+            const d = new Date(dateStr);
+            const date = d.toISOString().split('T')[0]; // YYYY-MM-DD in UTC... wait, local time matters?
+            // The DB stores date as DATE or TIMESTAMPTZ?
+            // Schema says "date" DATE NOT NULL.
+            // So it should be YYYY-MM-DD.
+
+            // Periods:
+            // before 11/23
+            // 11/24 ~ 11/30
+            // 12/01 ~ 12/07
+            // 12/08 ~ 12/14
+            // 12/15 ~ 12/21
+            // 12/22 ~ 12/28
+            // 12/29 ~ 01/04
+
+            // Let's use string comparison for YYYY-MM-DD since it works lexicographically.
+            // 2025-11-23
+
+            if (date < '2025-11-24') return 'Before 11/23';
+            if (date <= '2025-11-30') return '11/24 ~ 11/30';
+            if (date <= '2025-12-07') return '12/01 ~ 12/07';
+            if (date <= '2025-12-14') return '12/08 ~ 12/14';
+            if (date <= '2025-12-21') return '12/15 ~ 12/21';
+            if (date <= '2025-12-28') return '12/22 ~ 12/28';
+            if (date <= '2026-01-04') return '12/29 ~ 01/04'; // Assuming 2026 for Jan
+            return 'After 01/04';
+        };
+
+        // Process Data
+        let totalGiving = 0;
+        let totalCount = 0;
+        const campusSum = {};
+        const campusCount = {};
+        const periodSum = {
+            'Before 11/23': 0,
+            '11/24 ~ 11/30': 0,
+            '12/01 ~ 12/07': 0,
+            '12/08 ~ 12/14': 0,
+            '12/15 ~ 12/21': 0,
+            '12/22 ~ 12/28': 0,
+            '12/29 ~ 01/04': 0
+        };
+        const periodCount = {
+            'Before 11/23': 0,
+            '11/24 ~ 11/30': 0,
+            '12/01 ~ 12/07': 0,
+            '12/08 ~ 12/14': 0,
+            '12/15 ~ 12/21': 0,
+            '12/22 ~ 12/28': 0,
+            '12/29 ~ 01/04': 0
+        };
+
+        // Ordered keys for charts/tables
+        const periodKeys = [
+            'Before 11/23',
+            '11/24 ~ 11/30',
+            '12/01 ~ 12/07',
+            '12/08 ~ 12/14',
+            '12/15 ~ 12/21',
+            '12/22 ~ 12/28',
+            '12/29 ~ 01/04'
+        ];
+
+        rawData.forEach(item => {
+            const amount = Number(item.amount);
+            totalGiving += amount;
+            totalCount += 1;
+
+            // Campus
+            const campus = item.campus || 'Unknown';
+            campusSum[campus] = (campusSum[campus] || 0) + amount;
+            campusCount[campus] = (campusCount[campus] || 0) + 1;
+
+            // Period
+            const p = getPeriod(item.date);
+            if (periodSum.hasOwnProperty(p)) {
+                periodSum[p] += amount;
+                periodCount[p] += 1;
+            }
+        });
+
+        // Update DOM
+        document.getElementById('total-giving').textContent = formatCurrency(totalGiving);
+        document.getElementById('total-count').textContent = totalCount.toLocaleString();
+
+        // Charts Configuration
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = '#334155';
+
+        // Campus Charts
+        const campusLabels = Object.keys(campusSum);
+        const campusSumData = campusLabels.map(l => campusSum[l]);
+        const campusCountData = campusLabels.map(l => campusCount[l]);
+
+        new Chart(document.getElementById('campusSumChart'), {
+            type: 'bar',
+            data: {
+                labels: campusLabels,
+                datasets: [{
+                    label: 'Giving Sum',
+                    data: campusSumData,
+                    backgroundColor: '#4A90E2',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        new Chart(document.getElementById('campusCountChart'), {
+            type: 'bar',
+            data: {
+                labels: campusLabels,
+                datasets: [{
+                    label: 'Giving Count',
+                    data: campusCountData,
+                    backgroundColor: '#4A90E2',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Weekly Trend Chart
+        const periodSumData = periodKeys.map(k => periodSum[k]);
+        const periodCountData = periodKeys.map(k => periodCount[k]);
+
+        new Chart(document.getElementById('weeklyTrendChart'), {
+            type: 'line',
+            data: {
+                labels: periodKeys,
+                datasets: [
+                    {
+                        label: 'Giving Amount',
+                        data: periodSumData,
+                        borderColor: '#4A90E2',
+                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                        fill: true,
+                        yAxisID: 'y',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Giving Count',
+                        data: periodCountData,
+                        borderColor: '#10B981', // Green
+                        backgroundColor: 'transparent',
+                        yAxisID: 'y1',
+                        tension: 0.4,
+                        borderDash: [5, 5]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Amount ($)' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Count' }
+                    }
+                }
+            }
+        });
+
+        // Populate Table
+        const tableBody = document.getElementById('period-table-body');
+        periodKeys.forEach(key => {
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-slate-200 dark:border-slate-700";
+            tr.innerHTML = `
+                <td class="px-6 py-4 font-medium">${key}</td>
+                <td class="px-6 py-4 text-right">${formatCurrency(periodSum[key])}</td>
+                <td class="px-6 py-4 text-right">${periodCount[key]}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+    </script>
+</body>
+
+</html>

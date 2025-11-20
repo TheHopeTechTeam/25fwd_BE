@@ -59,6 +59,7 @@ Create a `.env` in the repo root before starting the app. The controller throws 
 | `REDIS_URL` | Redis connection string for BullMQ (`redis://user:pass@host:port/db`). |
 | `WORKERS` | Expected worker count (currently unused; code spawns 5 workers). |
 | `GOOGLE_SECRET` | Shared secret for `POST /api/getall`. |
+| `STATS_PASSWORD` | Basic auth password for the `/stats` dashboard (username ignored). |
 | `PGUSER` | PostgreSQL user. |
 | `PASSWORD` | PostgreSQL password. |
 | `HOST` | PostgreSQL host. |
@@ -80,6 +81,7 @@ CURRENCY=TWD
 REDIS_URL=redis://localhost:6379
 WORKERS=5
 GOOGLE_SECRET=super-secret
+STATS_PASSWORD=stats-pass
 PGUSER=postgres
 PASSWORD=postgres
 HOST=127.0.0.1
@@ -132,6 +134,9 @@ Rerun `schema.sql` afterwards to catch any other drift and keep the index (`conf
 - `POST /api/getall`
   - Body: `{ googleSecret, lastRowID }`.
   - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`, filtered to rows where `env = 'production'` and `amount > 1`. Pass `0` to fetch everything that matches those conditions.
+- `GET /stats`
+  - Headers: Set `Authorization: Basic base64(:<STATS_PASSWORD>)` (username is ignored; send an empty string before the colon).
+  - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling giving data via `givingModel.getAll()` and letting the client-side script aggregate totals.
 
 ## Troubleshooting
 - **`column "is_success" of relation "confgive" does not exist`** – The code inserts into `is_success`, but your table predates the column. Add the column manually using the SQL snippet above or drop/recreate the table via `schema.sql`.

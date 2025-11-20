@@ -10,6 +10,7 @@ const {
   REDIS_URL,
   WORKERS,
   GOOGLE_SECRET,
+  STATS_PASSWORD,
 } = process.env;
 
 if (
@@ -303,6 +304,32 @@ const givingController = {
       res.send({ data: result });
     } catch (e) {
       return res.status(500).json({ error: "Failed to get giving all data." });
+    }
+  },
+  statsPage: async (req, res) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      res.setHeader("WWW-Authenticate", 'Basic realm="Stats"');
+      return res.status(401).send("Authentication required");
+    }
+
+    const auth = Buffer.from(authHeader.split(" ")[1], "base64")
+      .toString()
+      .split(":");
+    const password = auth[1];
+
+    if (password !== STATS_PASSWORD) {
+      res.setHeader("WWW-Authenticate", 'Basic realm="Stats"');
+      return res.status(401).send("Invalid credentials");
+    }
+
+    try {
+      const data = await givingModel.get(0);
+      res.render("stats", { data });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      res.status(500).send("Error fetching stats");
     }
   },
 };

@@ -63,6 +63,17 @@ const givingModel = {
       throw e;
     }
   },
+  getAll: async () => {
+    try {
+      const res = await pool.query(
+        "SELECT * FROM confgive WHERE env = 'production' AND is_success = true ORDER BY date ASC"
+      );
+      return res.rows;
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  },
 };
 
 module.exports = givingModel;
