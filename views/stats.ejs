@@ -10,6 +10,7 @@
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -171,8 +172,15 @@
         // Process Data
         let totalGiving = 0;
         let totalCount = 0;
-        const campusSum = {};
-        const campusCount = {};
+        const campusOrder = ['台北分部', '台中分部', '線上分部', '其他'];
+        const campusSum = campusOrder.reduce((acc, campus) => {
+            acc[campus] = 0;
+            return acc;
+        }, {});
+        const campusCount = campusOrder.reduce((acc, campus) => {
+            acc[campus] = 0;
+            return acc;
+        }, {});
         const periodSum = {
             'Before 11/23': 0,
             '11/24 ~ 11/30': 0,
@@ -204,12 +212,13 @@
         ];
 
         rawData.forEach(item => {
-            const amount = Number(item.amount);
+            const amount = Number(item.amount) || 0;
             totalGiving += amount;
             totalCount += 1;
 
             // Campus
-            const campus = item.campus || 'Unknown';
+            const campusValue = (item.campus || '').trim();
+            const campus = campusOrder.includes(campusValue) ? campusValue : '其他';
             campusSum[campus] = (campusSum[campus] || 0) + amount;
             campusCount[campus] = (campusCount[campus] || 0) + 1;
 
@@ -228,11 +237,14 @@
         // Charts Configuration
         Chart.defaults.color = '#94a3b8';
         Chart.defaults.borderColor = '#334155';
+        if (window.ChartDataLabels) {
+            Chart.register(ChartDataLabels);
+        }
 
         // Campus Charts
-        const campusLabels = Object.keys(campusSum);
-        const campusSumData = campusLabels.map(l => campusSum[l]);
-        const campusCountData = campusLabels.map(l => campusCount[l]);
+        const campusLabels = campusOrder;
+        const campusSumData = campusLabels.map(l => campusSum[l] || 0);
+        const campusCountData = campusLabels.map(l => campusCount[l] || 0);
 
         new Chart(document.getElementById('campusSumChart'), {
             type: 'bar',
@@ -249,7 +261,15 @@
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } }
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        color: '#e2e8f0',
+                        formatter: (value) => formatCurrency(value)
+                    }
+                }
             }
         });
 
@@ -268,7 +288,15 @@
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } }
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        color: '#e2e8f0',
+                        formatter: (value) => value.toLocaleString()
+                    }
+                }
             }
         });
 
@@ -288,7 +316,13 @@
                         backgroundColor: 'rgba(74, 144, 226, 0.1)',
                         fill: true,
                         yAxisID: 'y',
-                        tension: 0.4
+                        tension: 0.4,
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#e2e8f0',
+                            formatter: (value) => formatCurrency(value)
+                        }
                     },
                     {
                         label: 'Giving Count',
@@ -297,7 +331,13 @@
                         backgroundColor: 'transparent',
                         yAxisID: 'y1',
                         tension: 0.4,
-                        borderDash: [5, 5]
+                        borderDash: [5, 5],
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'bottom',
+                            color: '#cbd5e1',
+                            formatter: (value) => value.toLocaleString()
+                        }
                     }
                 ]
             },
@@ -307,6 +347,11 @@
                 interaction: {
                     mode: 'index',
                     intersect: false,
+                },
+                plugins: {
+                    datalabels: {
+                        clip: true
+                    }
                 },
                 scales: {
                     y: {

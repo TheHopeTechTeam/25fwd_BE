@@ -5,18 +5,18 @@ Express backend that accepts donation submissions, charges them through TapPay, 
 Keep in mind that this repo intentionally stays small—there is no ORM, no migration system, and the queue/worker live in the same Node process. That simplicity makes it easy to reason about, but it also means you must remember the manual steps (Redis, Postgres schema, env vars) whenever you pick it up again.
 
 ## How the system hangs together
-- **Entry point (`index.js`)** – boots Express, sessions, JSON parser, CORS, and mounts two routes: `POST /api/payment` and `POST /api/getall`.
+- **Entry point (`index.js`)** – boots Express, sessions, JSON parser, CORS, and mounts three routes: `POST /payment`, `POST /getall`, and `GET /stats` (NGINX in front adds the `/api` prefix in production).
 - **Payment controller (`controllers/giving.js`)** – validates incoming payloads (including the `cardholder.campus` flag the frontend now passes), calls TapPay, converts the record into a DB-friendly shape, and enqueues a job on the `tappay-payments` BullMQ queue. Five workers (hardcoded) pull jobs and write rows to Postgres.
 - **Email service (`services/emailService.js` + `emails/givingSuccess.html`)** – once TapPay confirms a payment, the controller asks this module to send an HTML receipt through the Google Workspace mailbox (`noreply@thehope.co`).
 - **Data layer (`models/giving.js` + `db.js`)** – uses `pg` to insert/read from the `confgive` table. Schema definition lives in `schema.sql` so you can recreate the database quickly, including the `is_success` flag and `env` (sandbox/production) columns.
-- **Supporting files** – `stresstest.yaml` (Artillery load scenario), `AGENTS.md` (notes), and `package.json` for dependencies/scripts.
+- **Supporting files** – `views/stats.ejs` (Tailwind + Chart.js dashboard behind basic auth), `stresstest.yaml` (Artillery load scenario), `AGENTS.md` (notes), and `package.json` for dependencies/scripts.
 
 ### Request lifecycle
-1. Frontend sends `{ prime, amount, cardholder }` to `POST /api/payment`.
+1. Frontend sends `{ prime, amount, cardholder }` to `POST /payment` (`/api/payment` once the NGINX prefix is added).
 2. Controller builds TapPay request: partner key, merchant ID, amount, currency, and combines `phoneCode` + `phone_number` for the `details` string.
 3. TapPay response is returned immediately to the client. Only records with `status === 0` are persisted.
 4. Successful responses yield a job containing the structured donation record (now including `campus`) plus `rec_trade_id`, `is_success`, and the detected environment (`sandbox` when the TapPay API URL contains `sandbox`, otherwise `production`). BullMQ workers consume the job and call `givingModel.add`, which inserts into `confgive`.
-5. External systems poll `POST /api/getall` with `{ googleSecret, lastRowID }`. When the secret matches `GOOGLE_SECRET`, the API streams every row with `id > lastRowID`, `env = 'production'`, and `amount > 1`.
+5. External systems poll `POST /getall` with `{ googleSecret, lastRowID }`. When the secret matches `GOOGLE_SECRET`, the API streams every row with `id > lastRowID`, `env = 'production'`, and `amount > 1`.
 
 ### Queue/worker specifics
 - Queue name: `tappay-payments` (BullMQ). Redis connection string set with `REDIS_URL`.
@@ -128,15 +128,15 @@ Rerun `schema.sql` afterwards to catch any other drift and keep the index (`conf
 5. (Email) Once the API is online, hit the health flow with a test payment that includes `cardholder.email`. The console logs `emailService` messages showing whether the SMTP transport authenticated and if the email was dispatched.
 
 ## Endpoints you can call
-- `POST /api/payment`
+- `POST /payment`
   - Body: `{ prime, amount, cardholder }`, where `cardholder` includes `phoneCode`, `phone_number`, `name`, `email`, optional receipt metadata, and the new `campus` key that identifies which campus initiated the donation.
   - Behavior: Calls TapPay immediately; queues a DB write only when `status === 0`. The email service also triggers here (best-effort) to send an HTML receipt via Gmail. Errors during TapPay surface as HTTP 500 with `Failed to add payment to processing queue.`
-- `POST /api/getall`
+- `POST /getall`
   - Body: `{ googleSecret, lastRowID }`.
   - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`, filtered to rows where `env = 'production'` and `amount > 1`. Pass `0` to fetch everything that matches those conditions.
 - `GET /stats`
   - Headers: Set `Authorization: Basic base64(:<STATS_PASSWORD>)` (username is ignored; send an empty string before the colon).
-  - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling giving data via `givingModel.getAll()` and letting the client-side script aggregate totals.
+  - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling giving data via `givingModel.get(0)` and letting the client-side script aggregate totals; the page now includes by-campus bar charts and weekly trends.
 
 ## Troubleshooting
 - **`column "is_success" of relation "confgive" does not exist`** – The code inserts into `is_success`, but your table predates the column. Add the column manually using the SQL snippet above or drop/recreate the table via `schema.sql`.
