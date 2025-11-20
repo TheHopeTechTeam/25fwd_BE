@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Giving Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4A90E2",
+                        "background-light": "#F4F7FA",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+
+        .chart-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .chart-point:hover .chart-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark">
+    <div class="flex min-h-screen">
+        <main class="flex-1 p-8 overflow-y-auto w-full">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap justify-between gap-3 mb-8">
+                    <div class="flex flex-col gap-2">
+                        <p class="text-slate-900 dark:text-white text-3xl font-bold leading-tight tracking-tight">Giving
+                            Dashboard</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">An overview
+                            of key giving metrics.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div
+                        class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-slate-600 dark:text-slate-300 text-base font-medium leading-normal">Total Giving
+                        </p>
+                        <p class="text-slate-900 dark:text-white tracking-tight text-4xl font-bold leading-tight">
+                            $1,245,678</p>
+                    </div>
+                    <div
+                        class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-slate-600 dark:text-slate-300 text-base font-medium leading-normal">Total Givers
+                        </p>
+                        <p class="text-slate-900 dark:text-white tracking-tight text-4xl font-bold leading-tight">23,456
+                        </p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1 flex flex-col gap-6">
+                        <div
+                            class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                            <p class="text-slate-900 dark:text-white text-lg font-bold">Giving Sum by Campus</p>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Main Campus
+                                        </p>
+                                        <p class="text-slate-800 dark:text-slate-100 text-sm font-semibold">$350,234</p>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">North Campus
+                                        </p>
+                                        <p class="text-slate-800 dark:text-slate-100 text-sm font-semibold">$210,876</p>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 35%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">South Campus
+                                        </p>
+                                        <p class="text-slate-800 dark:text-slate-100 text-sm font-semibold">$145,112</p>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 25%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Online</p>
+                                        <p class="text-slate-800 dark:text-slate-100 text-sm font-semibold">$539,456</p>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 90%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                            <p class="text-slate-900 dark:text-white text-lg font-bold">Giving Count by Campus</p>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Main Campus
+                                        </p>
+                                        <p class="text-slate-800 dark:text-slate-100 text-sm font-semibold">6,543</p>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 65%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">North Campus
+                                        </p>
+                                        <p class="text-slate-800 dark:text-slate-100 text-sm font-semibold">4,123</p>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">South Campus
+                                        </p>
+                                        <p class="text-slate-800 dark:text-slate-100 text-sm font-semibold">2,890</p>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 30%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Online</p>
+                                        <p class="text-slate-800 dark:text-slate-100 text-sm font-semibold">9,900</p>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 95%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 flex flex-col gap-4">
+                        <div
+                            class="rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                            <p class="text-slate-900 dark:text-white text-lg font-bold mb-1">Weekly Giving Trend</p>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">Nov 2025 - Jan 2026
+                            </p>
+                            <div class="flex items-center">
+                                <div class="flex-1">
+                                    <div class="h-80 relative flex items-end ml-4">
+                                        <div
+                                            class="absolute left-0 top-0 bottom-12 flex flex-col justify-between text-xs text-slate-400 -translate-x-full pr-2 text-right">
+                                            <span>$35k</span>
+                                            <span>$25k</span>
+                                            <span>$15k</span>
+                                            <span>$5k</span>
+                                            <span>$0</span>
+                                        </div>
+                                        <div
+                                            class="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-slate-400 pt-2 text-center">
+                                            <div class="w-1/7"><span>Before 11/23</span></div>
+                                            <div class="w-1/7"><span>11/24 - 11/30</span></div>
+                                            <div class="w-1/7"><span>12/01 - 12/07</span></div>
+                                            <div class="w-1/7"><span>12/08 - 12/14</span></div>
+                                            <div class="w-1/7"><span>12/15 - 12/21</span></div>
+                                            <div class="w-1/7"><span>12/22 - 12/28</span></div>
+                                            <div class="w-1/7"><span>12/29 - 01/04</span></div>
+                                        </div>
+                                        <div
+                                            class="absolute bottom-[-2.5rem] w-full text-center text-sm text-slate-500 dark:text-slate-400">
+                                            Week Dates</div>
+                                        <svg class="w-full h-full" fill="none" height="100%" overflow="visible"
+                                            preserveAspectRatio="none" viewBox="0 0 500 200" width="100%"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M0 200 L0 180 L83 170 L166 185 L249 150 L332 120 L415 80 L500 100 L500 200 Z"
+                                                fill="url(#area-gradient)"></path>
+                                            <path d="M0 180 L83 170 L166 185 L249 150 L332 120 L415 80 L500 100"
+                                                stroke="#4A90E2" stroke-width="2"></path>
+                                            <defs>
+                                                <linearGradient gradientUnits="userSpaceOnUse" id="area-gradient" x1="0"
+                                                    x2="0" y1="0" y2="200">
+                                                    <stop stop-color="#4A90E2" stop-opacity="0.3"></stop>
+                                                    <stop offset="1" stop-color="#4A90E2" stop-opacity="0"></stop>
+                                                </linearGradient>
+                                            </defs>
+                                            <g class="chart-point">
+                                                <circle cx="0" cy="180" fill="#4A90E2" r="4"></circle>
+                                                <text class="text-slate-800 dark:text-slate-100" fill="currentColor"
+                                                    font-size="12" font-weight="600" text-anchor="middle" x="0"
+                                                    y="170">$15.8k</text>
+                                                <text class="text-slate-500 dark:text-slate-400" fill="currentColor"
+                                                    font-size="11" text-anchor="middle" x="0" y="184">(295)</text>
+                                            </g>
+                                            <g class="chart-point">
+                                                <circle cx="83" cy="170" fill="#4A90E2" r="4"></circle>
+                                                <text class="text-slate-800 dark:text-slate-100" fill="currentColor"
+                                                    font-size="12" font-weight="600" text-anchor="middle" x="83"
+                                                    y="160">$11.2k</text>
+                                                <text class="text-slate-500 dark:text-slate-400" fill="currentColor"
+                                                    font-size="11" text-anchor="middle" x="83" y="174">(215)</text>
+                                            </g>
+                                            <g class="chart-point">
+                                                <circle cx="166" cy="185" fill="#4A90E2" r="4"></circle>
+                                                <text class="text-slate-800 dark:text-slate-100" fill="currentColor"
+                                                    font-size="12" font-weight="600" text-anchor="middle" x="166"
+                                                    y="175">$18.9k</text>
+                                                <text class="text-slate-500 dark:text-slate-400" fill="currentColor"
+                                                    font-size="11" text-anchor="middle" x="166" y="189">(350)</text>
+                                            </g>
+                                            <g class="chart-point">
+                                                <circle cx="249" cy="150" fill="#4A90E2" r="4"></circle>
+                                                <text class="text-slate-800 dark:text-slate-100" fill="currentColor"
+                                                    font-size="12" font-weight="600" text-anchor="middle" x="249"
+                                                    y="140">$25.5k</text>
+                                                <text class="text-slate-500 dark:text-slate-400" fill="currentColor"
+                                                    font-size="11" text-anchor="middle" x="249" y="154">(460)</text>
+                                            </g>
+                                            <g class="chart-point">
+                                                <circle cx="332" cy="120" fill="#4A90E2" r="4"></circle>
+                                                <text class="text-slate-800 dark:text-slate-100" fill="currentColor"
+                                                    font-size="12" font-weight="600" text-anchor="middle" x="332"
+                                                    y="110">$32.2k</text>
+                                                <text class="text-slate-500 dark:text-slate-400" fill="currentColor"
+                                                    font-size="11" text-anchor="middle" x="332" y="124">(580)</text>
+                                            </g>
+                                            <g class="chart-point">
+                                                <circle cx="415" cy="80" fill="#4A90E2" r="4"></circle>
+                                                <text class="text-slate-800 dark:text-slate-100" fill="currentColor"
+                                                    font-size="12" font-weight="600" text-anchor="middle" x="415"
+                                                    y="70">$28.7k</text>
+                                                <text class="text-slate-500 dark:text-slate-400" fill="currentColor"
+                                                    font-size="11" text-anchor="middle" x="415" y="84">(510)</text>
+                                            </g>
+                                            <g class="chart-point">
+                                                <circle cx="500" cy="100" fill="#4A90E2" r="4"></circle>
+                                                <text class="text-slate-800 dark:text-slate-100" fill="currentColor"
+                                                    font-size="12" font-weight="600" text-anchor="middle" x="500"
+                                                    y="90">$24.3k</text>
+                                                <text class="text-slate-500 dark:text-slate-400" fill="currentColor"
+                                                    font-size="11" text-anchor="middle" x="500" y="104">(480)</text>
+                                            </g>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="overflow-x-auto rounded-xl bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                            <table class="w-full text-left">
+                                <thead
+                                    class="bg-slate-50 dark:bg-slate-800 text-xs text-slate-500 dark:text-slate-400 uppercase">
+                                    <tr>
+                                        <th class="px-6 py-3" scope="col">Week Period</th>
+                                        <th class="px-6 py-3 text-right" scope="col">Giving Amount</th>
+                                        <th class="px-6 py-3 text-right" scope="col">Giving Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm text-slate-700 dark:text-slate-300">
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <td class="px-6 py-4 font-medium">Before 11/23</td>
+                                        <td class="px-6 py-4 text-right">$12,450</td>
+                                        <td class="px-6 py-4 text-right">230</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <td class="px-6 py-4 font-medium">11/24 - 11/30</td>
+                                        <td class="px-6 py-4 text-right">$15,800</td>
+                                        <td class="px-6 py-4 text-right">295</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <td class="px-6 py-4 font-medium">12/01 - 12/07</td>
+                                        <td class="px-6 py-4 text-right">$11,200</td>
+                                        <td class="px-6 py-4 text-right">215</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <td class="px-6 py-4 font-medium">12/08 - 12/14</td>
+                                        <td class="px-6 py-4 text-right">$18,900</td>
+                                        <td class="px-6 py-4 text-right">350</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <td class="px-6 py-4 font-medium">12/15 - 12/21</td>
+                                        <td class="px-6 py-4 text-right">$25,500</td>
+                                        <td class="px-6 py-4 text-right">460</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <td class="px-6 py-4 font-medium">12/22 - 12/28</td>
+                                        <td class="px-6 py-4 text-right">$32,150</td>
+                                        <td class="px-6 py-4 text-right">580</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 font-medium">12/29 - 01/04</td>
+                                        <td class="px-6 py-4 text-right">$28,700</td>
+                                        <td class="px-6 py-4 text-right">510</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

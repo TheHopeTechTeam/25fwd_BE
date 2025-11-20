@@ -2,4 +2,6 @@ node_modules
 .env
 vercel.json
 AGENTS.md
+GEMINI.md
 .DS_Store
+*.png
