@@ -136,7 +136,7 @@ Rerun `schema.sql` afterwards to catch any other drift and keep the index (`conf
   - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`, filtered to rows where `env = 'production'` and `amount > 1`. Pass `0` to fetch everything that matches those conditions.
 - `GET /stats`
   - Headers: Set `Authorization: Basic base64(:<STATS_PASSWORD>)` (username is ignored; send an empty string before the colon).
-  - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling giving data via `givingModel.get(0)` and letting the client-side script aggregate totals; the page now includes by-campus bar charts and weekly trends.
+  - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling production rows with `amount > 1` via `givingModel.get(0)`. Client-side charts cover by-campus bar charts, weekly trendlines, and a “Past 7 Days” daily sum block (Taipei time, today included).
 
 ## Troubleshooting
 - **`column "is_success" of relation "confgive" does not exist`** – The code inserts into `is_success`, but your table predates the column. Add the column manually using the SQL snippet above or drop/recreate the table via `schema.sql`.

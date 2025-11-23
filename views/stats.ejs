@@ -120,6 +120,17 @@
                         </table>
                     </div>
                 </div>
+
+                <div class="grid grid-cols-1 gap-8 mt-8">
+                    <div
+                        class="rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-lg font-bold mb-1">Past 7 Days</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">Daily giving sums (Taipei time, today included)</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="recent-daily-cards">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -131,10 +142,50 @@
         // Inject data from server
         const rawData = JSON.parse(document.getElementById('server-data').textContent);
 
+        const taipeiDateFormatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Taipei',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        const DAY_MS = 24 * 60 * 60 * 1000;
+
         // Helper to format currency
         const formatCurrency = (amount) => {
             return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(amount);
         };
+
+        const getTaipeiMidnightMs = (dateInput) => {
+            const parts = taipeiDateFormatter.formatToParts(dateInput);
+            const year = Number(parts.find(p => p.type === 'year')?.value);
+            const month = Number(parts.find(p => p.type === 'month')?.value);
+            const day = Number(parts.find(p => p.type === 'day')?.value);
+            if ([year, month, day].some(v => Number.isNaN(v))) {
+                return null;
+            }
+            return Date.UTC(year, month - 1, day);
+        };
+
+        const parseDbDateToUTC = (dateStr) => {
+            if (!dateStr) return null;
+            const dateOnly = String(dateStr).slice(0, 10);
+            const [year, month, day] = dateOnly.split('-').map(Number);
+            if ([year, month, day].some(v => Number.isNaN(v))) return null;
+            return Date.UTC(year, month - 1, day);
+        };
+
+        const todayTaipeiMs = getTaipeiMidnightMs(new Date());
+        const pastSevenDays = Array.from({ length: 7 }, (_, index) => {
+            const ts = todayTaipeiMs - index * DAY_MS;
+            return {
+                ts,
+                label: taipeiDateFormatter.format(new Date(ts))
+            };
+        }).reverse();
+        const pastSevenSums = pastSevenDays.reduce((acc, { label }) => {
+            acc[label] = 0;
+            return acc;
+        }, {});
 
         // Helper to determine period
         const getPeriod = (dateStr) => {
@@ -227,6 +278,16 @@
             if (periodSum.hasOwnProperty(p)) {
                 periodSum[p] += amount;
                 periodCount[p] += 1;
+            }
+
+            // Past 7 days (Taipei)
+            const donationDateMs = parseDbDateToUTC(item.date);
+            if (donationDateMs !== null && todayTaipeiMs !== null) {
+                const dayDiff = Math.round((todayTaipeiMs - donationDateMs) / DAY_MS);
+                if (dayDiff >= 0 && dayDiff < 7) {
+                    const label = taipeiDateFormatter.format(new Date(donationDateMs));
+                    pastSevenSums[label] = (pastSevenSums[label] || 0) + amount;
+                }
             }
         });
 
@@ -382,6 +443,24 @@
                 <td class="px-6 py-4 text-right">${periodCount[key]}</td>
             `;
             tableBody.appendChild(tr);
+        });
+
+        // Past 7 Days cards
+        const recentDailyContainer = document.getElementById('recent-daily-cards');
+        [...pastSevenDays].reverse().forEach(({ label }) => {
+            const card = document.createElement('div');
+            card.className = "rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60";
+            const amount = pastSevenSums[label] || 0;
+            card.innerHTML = `
+                <div class="flex items-center justify-between gap-3 p-4">
+                    <div>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">#${label}</p>
+                        <p class="text-lg font-bold">${formatCurrency(amount)}</p>
+                    </div>
+                    <span class="material-symbols-outlined text-primary">trending_up</span>
+                </div>
+            `;
+            recentDailyContainer.appendChild(card);
         });
 
     </script>
