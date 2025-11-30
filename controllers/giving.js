@@ -1,6 +1,7 @@
 const axios = require("axios");
 const givingModel = require("../models/giving");
 const { sendGivingSuccessEmail } = require("../services/emailService");
+const { parseSiyuanCsv } = require("../utils/siyuanImport");
 
 const {
   PARTNER_KEY,
@@ -94,7 +95,8 @@ function getCurrentDate() {
 }
 
 function resolvePaymentEnv(apiUrl) {
-  return apiUrl && apiUrl.includes("sandbox") ? "sandbox" : "production";
+  if (!apiUrl) return "sandbox";
+  return apiUrl.toLowerCase().includes("sandbox") ? "sandbox" : "production";
 }
 
 function formatCurrencyDisplay(rawAmount, currencyCode = "TWD") {
@@ -128,6 +130,52 @@ function formatPaymentMethod(method) {
   return method.split("_").join(" ").toUpperCase();
 }
 
+function requireStatsAuth(req, res, respondWithJson = false) {
+  const unauthenticated = () => {
+    res.setHeader("WWW-Authenticate", 'Basic realm="Stats"');
+    const message = "Authentication required";
+    if (respondWithJson) {
+      res.status(401).json({ error: message });
+    } else {
+      res.status(401).send(message);
+    }
+  };
+
+  const invalid = () => {
+    res.setHeader("WWW-Authenticate", 'Basic realm="Stats"');
+    const message = "Invalid credentials";
+    if (respondWithJson) {
+      res.status(401).json({ error: message });
+    } else {
+      res.status(401).send(message);
+    }
+  };
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    unauthenticated();
+    return false;
+  }
+
+  try {
+    const auth = Buffer.from(authHeader.split(" ")[1], "base64")
+      .toString()
+      .split(":");
+    const password = auth[1];
+
+    if (password !== STATS_PASSWORD) {
+      invalid();
+      return false;
+    }
+  } catch (error) {
+    invalid();
+    return false;
+  }
+
+  return true;
+}
+
 // Worker processing function (shared by all workers)
 const paymentWorkerProcessor = async (job) => {
   const { givingData } = job.data; // Destructure jobId
@@ -150,7 +198,10 @@ const paymentWorkerProcessor = async (job) => {
       givingData.campus,
       givingData.tpTradeID,
       givingData.isSuccess,
-      givingData.env
+      givingData.env,
+      givingData.imported,
+      givingData.siyuanId,
+      givingData.createdAt
     );
 
     return { success: true }; // Return the response
@@ -219,6 +270,8 @@ const givingController = {
       taxid: cardholder.taxid || "",
       note: cardholder.note || "",
       campus: cardholder.campus || "",
+      imported: false,
+      siyuanId: null,
       isSuccess: false,
       env: resolvePaymentEnv(TAPPAY_API),
     };
@@ -307,22 +360,7 @@ const givingController = {
     }
   },
   statsPage: async (req, res) => {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      res.setHeader("WWW-Authenticate", 'Basic realm="Stats"');
-      return res.status(401).send("Authentication required");
-    }
-
-    const auth = Buffer.from(authHeader.split(" ")[1], "base64")
-      .toString()
-      .split(":");
-    const password = auth[1];
-
-    if (password !== STATS_PASSWORD) {
-      res.setHeader("WWW-Authenticate", 'Basic realm="Stats"');
-      return res.status(401).send("Invalid credentials");
-    }
+    if (!requireStatsAuth(req, res)) return;
 
     try {
       const data = await givingModel.get(0);
@@ -330,6 +368,35 @@ const givingController = {
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).send("Error fetching stats");
+    }
+  },
+  uploadSiyuan: async (req, res) => {
+    if (!requireStatsAuth(req, res, true)) return;
+
+    const { csvText } = req.body;
+
+    if (!csvText || typeof csvText !== "string") {
+      return res.status(400).json({ error: "csvText is required" });
+    }
+
+    const importEnv = resolvePaymentEnv(TAPPAY_API);
+    const { records, skippedTapPay, errors } = parseSiyuanCsv(
+      csvText,
+      importEnv
+    );
+
+    if (records.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "No valid rows to import", skippedTapPay, errors });
+    }
+
+    try {
+      const { inserted } = await givingModel.bulkInsertImported(records);
+      res.json({ inserted, skippedTapPay, errors });
+    } catch (error) {
+      console.error("Error importing Siyuan CSV:", error);
+      res.status(500).json({ error: "Failed to import Siyuan CSV" });
     }
   },
 };

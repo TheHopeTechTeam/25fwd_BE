@@ -1,5 +1,55 @@
 const pool = require("../db");
 
+const INSERT_QUERY = `INSERT INTO confgive (name, amount, currency, date, phone_number, email, receipt, paymentType, upload, receiptName, nationalid, company, taxid, note, campus, tp_trade_id, is_success, env, imported, siyuan_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, COALESCE($21, NOW()))`;
+
+function buildInsertParams({
+  name,
+  amount,
+  currency,
+  date,
+  phoneNumber,
+  email,
+  receipt,
+  paymentType,
+  upload,
+  receiptName,
+  nationalid,
+  company,
+  taxid,
+  note,
+  campus,
+  tpTradeID,
+  isSuccess,
+  env,
+  imported = false,
+  siyuanId = null,
+  createdAt = null,
+}) {
+  return [
+    name,
+    amount,
+    currency,
+    date,
+    phoneNumber,
+    email,
+    receipt,
+    paymentType,
+    upload,
+    receiptName,
+    nationalid,
+    company,
+    taxid,
+    note,
+    campus,
+    tpTradeID,
+    isSuccess,
+    env,
+    imported,
+    siyuanId,
+    createdAt,
+  ];
+}
+
 const givingModel = {
   add: async (
     name,
@@ -19,17 +69,20 @@ const givingModel = {
     campus,
     tpTradeID,
     isSuccess,
-    env
+    env,
+    imported = false,
+    siyuanId = null,
+    createdAt = null
   ) => {
     try {
       await pool.query(
-        `INSERT INTO confgive (name, amount, currency, date, phone_number, email, receipt, paymentType, upload, receiptName, nationalid, company, taxid, note, campus, tp_trade_id, is_success, env) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
-        [
+        INSERT_QUERY,
+        buildInsertParams({
           name,
           amount,
           currency,
           date,
-          phone_number,
+          phoneNumber: phone_number,
           email,
           receipt,
           paymentType,
@@ -43,12 +96,38 @@ const givingModel = {
           tpTradeID,
           isSuccess,
           env,
-        ]
+          imported,
+          siyuanId,
+          createdAt,
+        })
       );
       console.log("Data inserted with success");
     } catch (err) {
       console.error("Error executing query in givingModel.add:", err);
       throw err;
+    }
+  },
+  bulkInsertImported: async (records = []) => {
+    if (!Array.isArray(records) || records.length === 0) {
+      return { inserted: 0 };
+    }
+
+    const client = await pool.connect();
+    let inserted = 0;
+    try {
+      await client.query("BEGIN");
+      for (const record of records) {
+        await client.query(INSERT_QUERY, buildInsertParams(record));
+        inserted += 1;
+      }
+      await client.query("COMMIT");
+      return { inserted };
+    } catch (err) {
+      await client.query("ROLLBACK");
+      console.error("Error executing bulk insert in givingModel.bulkInsertImported:", err);
+      throw err;
+    } finally {
+      client.release();
     }
   },
   get: async (lastRowID) => {

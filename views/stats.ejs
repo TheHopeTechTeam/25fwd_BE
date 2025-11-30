@@ -55,6 +55,22 @@
                         <p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">An overview
                             of key giving metrics.</p>
                     </div>
+                    <div class="w-full lg:w-auto flex flex-col gap-3 rounded-xl p-4 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-col md:flex-row gap-3 md:items-center">
+                            <label class="w-full md:w-64 flex items-center gap-3 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 text-sm cursor-pointer hover:border-primary transition">
+                                <span class="material-symbols-outlined text-primary">upload_file</span>
+                                <span class="flex-1 truncate">Upload giving data (CSV)</span>
+                                <input id="siyuan-file" type="file" accept=".csv,text/csv" class="hidden" />
+                            </label>
+                            <button id="upload-siyuan-btn"
+                                class="px-4 py-2 rounded-lg bg-primary text-white font-semibold shadow hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed transition">
+                                Upload giving data
+                            </button>
+                        </div>
+                        <p id="upload-feedback" class="text-sm text-slate-500 dark:text-slate-400">
+                            Select the Siyuan CSV to import giving records. Rows with “Tappay” notes are skipped.
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Summary Cards -->
@@ -462,6 +478,59 @@
             `;
             recentDailyContainer.appendChild(card);
         });
+
+        const uploadButton = document.getElementById('upload-siyuan-btn');
+        const fileInput = document.getElementById('siyuan-file');
+        const uploadFeedback = document.getElementById('upload-feedback');
+
+        const setUploadStatus = (message, isError = false) => {
+            if (!uploadFeedback) return;
+            uploadFeedback.textContent = message;
+            uploadFeedback.classList.toggle('text-rose-500', isError);
+            uploadFeedback.classList.toggle('text-slate-500', !isError);
+            uploadFeedback.classList.toggle('dark:text-slate-400', !isError);
+        };
+
+        async function handleSiyuanUpload() {
+            const file = fileInput?.files?.[0];
+            if (!file) {
+                setUploadStatus('請先選擇 CSV 檔案再上傳。', true);
+                return;
+            }
+
+            uploadButton.disabled = true;
+            const originalLabel = uploadButton.textContent;
+            uploadButton.textContent = 'Uploading...';
+            setUploadStatus('上傳並匯入中，請稍候...');
+
+            try {
+                const csvText = await file.text();
+                const response = await fetch('/upload-siyuan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ csvText })
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(payload.error || '匯入失敗');
+                }
+
+                const { inserted = 0, skippedTapPay = 0, errors = [] } = payload;
+                const errorDetails = errors.slice(0, 3).map((e) => `#${e.line}: ${e.reason}`).join('；');
+                const detailSuffix = errorDetails ? `，${errorDetails}` : '';
+
+                setUploadStatus(`匯入完成：新增 ${inserted} 筆，跳過 ${skippedTapPay} 筆 Tappay 備註${errors.length ? `，${errors.length} 筆失敗` : ''}${detailSuffix}。即將重新整理...`);
+                setTimeout(() => window.location.reload(), 1000);
+            } catch (error) {
+                setUploadStatus(error.message || '匯入失敗', true);
+            } finally {
+                uploadButton.disabled = false;
+                uploadButton.textContent = originalLabel;
+            }
+        }
+
+        uploadButton?.addEventListener('click', handleSiyuanUpload);
 
     </script>
 </body>

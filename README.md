@@ -93,20 +93,24 @@ GIVING_EMAIL_BANNER_PATH=./assets/banner.png
 ```
 
 ## Database schema & migrations
-`schema.sql` is the single source of truth. Because the file uses `CREATE TABLE IF NOT EXISTS`, it will **not** retroactively add columns to an existing table. Whenever the schema changes, either drop/recreate the table or run manual `ALTER TABLE` statements (e.g., we now add `campus` with `ALTER TABLE public.confgive ADD COLUMN IF NOT EXISTS campus TEXT;`).
+`schema.sql` is the single source of truth. Because the file uses `CREATE TABLE IF NOT EXISTS`, it will **not** retroactively add columns to an existing table. Whenever the schema changes, either drop/recreate the table or run manual `ALTER TABLE` statements (e.g., we now add the Siyuan import metadata columns with `ALTER TABLE public.confgive ADD COLUMN IF NOT EXISTS imported BOOLEAN NOT NULL DEFAULT FALSE;`).
 
 Key columns inside `public.confgive`:
 - `name`, `amount` (int), `currency` (3-char)
-- `date` (stored as `DATE`, set by the service)
+- `date` (stored as `TIMESTAMPTZ`, set by the service)
 - `phone_number`, `email`, `receipt` (bool), `paymenttype`, `upload`
 - Receipt metadata: `receiptname`, `nationalid`, `company`, `taxid`, `note`, `campus`
 - TapPay metadata: `tp_trade_id`, `is_success` (bool), `env` (`sandbox` or `production`), `created_at`
+- Siyuan import metadata: `imported` (bool, defaults to false for native payments) and `siyuan_id` (string identifier from Siyuan)
 
 Manual migration helper when you see `column "is_success" does not exist`:
 ```sql
 ALTER TABLE public.confgive
   ADD COLUMN IF NOT EXISTS is_success BOOLEAN NOT NULL DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS env VARCHAR(16) NOT NULL DEFAULT 'sandbox' CHECK (env IN ('sandbox','production'));
+  ADD COLUMN IF NOT EXISTS env VARCHAR(16) NOT NULL DEFAULT 'sandbox' CHECK (env IN ('sandbox','production')),
+  ADD COLUMN IF NOT EXISTS imported BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS siyuan_id TEXT,
+  ALTER COLUMN "date" TYPE TIMESTAMPTZ USING "date"::timestamptz;
 ```
 Rerun `schema.sql` afterwards to catch any other drift and keep the index (`confgive_tp_trade_id_idx`) in place.
 
@@ -134,9 +138,19 @@ Rerun `schema.sql` afterwards to catch any other drift and keep the index (`conf
 - `POST /getall`
   - Body: `{ googleSecret, lastRowID }`.
   - Behavior: Requires the secret to match; returns `{ data: [...] }` sorted by `id`, filtered to rows where `env = 'production'` and `amount > 1`. Pass `0` to fetch everything that matches those conditions.
+- `POST /upload-siyuan`
+  - Body: `{ csvText }` where `csvText` is the raw CSV contents from Siyuan (sent automatically from the dashboard upload button).
+  - Auth: Same Basic Auth password as `/stats`.
+  - Behavior: Parses Siyuan donations (see rules below), skips rows whose notes contain `Tappay`, and bulk-inserts them with `imported = true`, `siyuan_id` set from column B, `env` derived from `TAPPAY_API` (sandbox vs production), and `tp_trade_id` of the form `siyuan-<id>`.
 - `GET /stats`
   - Headers: Set `Authorization: Basic base64(:<STATS_PASSWORD>)` (username is ignored; send an empty string before the colon).
   - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling production rows with `amount > 1` via `givingModel.get(0)`. Client-side charts cover by-campus bar charts, weekly trendlines, and a “Past 7 Days” daily sum block (Taipei time, today included).
+
+### Siyuan CSV import rules
+- Columns expected (A → I): ignore donation sequence, `siyuan_id` (B), ignore C and E, campus (D), amount (F), order time (G), payment method (H), note (I).
+- Campus normalization: `台北分部 Taipei Campus` → `台北分部`; `台中分部 Taichung Campus` → `台中分部`; `線上分部 Online Campus (Hope Nation)` → `線上分部`; everything else → `其他`.
+- Rows with notes containing “Tappay” (case-insensitive) are dropped.
+- Order time is parsed as Taipei time `YYYY/MM/DD HH:mm[:ss]` and stored as `TIMESTAMPTZ` (e.g., `2025-11-11 08:07:18+00`).
 
 ## Troubleshooting
 - **`column "is_success" of relation "confgive" does not exist`** – The code inserts into `is_success`, but your table predates the column. Add the column manually using the SQL snippet above or drop/recreate the table via `schema.sql`.
