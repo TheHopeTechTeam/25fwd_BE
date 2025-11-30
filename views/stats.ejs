@@ -49,28 +49,9 @@
     <div class="flex min-h-screen">
         <main class="flex-1 p-8 overflow-y-auto w-full">
             <div class="max-w-7xl mx-auto">
-                <div class="flex flex-wrap justify-between gap-3 mb-8">
-                    <div class="flex flex-col gap-2">
-                        <p class="text-3xl font-bold leading-tight tracking-tight">Giving Dashboard</p>
-                        <p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">An overview
-                            of key giving metrics.</p>
-                    </div>
-                    <div class="w-full lg:w-auto flex flex-col gap-3 rounded-xl p-4 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
-                        <div class="flex flex-col md:flex-row gap-3 md:items-center">
-                            <label class="w-full md:w-64 flex items-center gap-3 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 text-sm cursor-pointer hover:border-primary transition">
-                                <span class="material-symbols-outlined text-primary">upload_file</span>
-                                <span class="flex-1 truncate">Upload giving data (CSV)</span>
-                                <input id="siyuan-file" type="file" accept=".csv,text/csv" class="hidden" />
-                            </label>
-                            <button id="upload-siyuan-btn"
-                                class="px-4 py-2 rounded-lg bg-primary text-white font-semibold shadow hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed transition">
-                                Upload giving data
-                            </button>
-                        </div>
-                        <p id="upload-feedback" class="text-sm text-slate-500 dark:text-slate-400">
-                            Select the Siyuan CSV to import giving records. Rows with “Tappay” notes are skipped.
-                        </p>
-                    </div>
+                <div class="flex flex-col gap-2 mb-8">
+                    <p class="text-3xl font-bold leading-tight tracking-tight">Giving Dashboard</p>
+                    <p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">An overview of key giving metrics.</p>
                 </div>
 
                 <!-- Summary Cards -->
@@ -149,6 +130,25 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <div class="p-6 bg-white dark:bg-[#192734] border-t border-slate-200 dark:border-slate-700">
+        <div class="max-w-7xl mx-auto flex flex-col gap-3">
+            <div class="flex flex-col md:flex-row gap-3 md:items-center">
+                <label class="w-full md:w-72 flex items-center gap-3 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/60 text-sm cursor-pointer hover:border-primary transition">
+                    <span class="material-symbols-outlined text-primary">upload_file</span>
+                    <span class="flex-1 truncate">Upload giving data (CSV)</span>
+                    <input id="siyuan-file" type="file" accept=".csv,text/csv" class="hidden" />
+                </label>
+                <button id="upload-siyuan-btn"
+                    class="px-4 py-2 rounded-lg bg-primary text-white font-semibold shadow hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed transition">
+                    Upload giving data
+                </button>
+            </div>
+            <p id="upload-feedback" class="text-sm text-slate-500 dark:text-slate-400">
+                Select the Siyuan CSV to import giving records. Rows with “Tappay” notes are skipped.
+            </p>
+        </div>
     </div>
 
     <script id="server-data" type="application/json">
