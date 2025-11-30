@@ -505,7 +505,8 @@
 
             try {
                 const csvText = await file.text();
-                const response = await fetch('/upload-siyuan', {
+                const basePath = window.location.pathname.startsWith('/api/') ? '/api' : '';
+                const response = await fetch(`${basePath}/upload-siyuan`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
