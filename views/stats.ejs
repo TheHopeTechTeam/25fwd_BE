@@ -110,8 +110,8 @@
                     <div
                         class="rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
                         <p class="text-lg font-bold mb-1">Weekly Giving Trend</p>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-1">2024 Week 1: 11/10</p>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">2025 Week 1: 11/15</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-1">2024 Week 1 & Before: 10/01</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">2025 Week 1 & Before: 10/01</p>
                         <div class="h-80 w-full">
                             <canvas id="weeklyTrendChart"></canvas>
                         </div>
@@ -223,7 +223,7 @@
 
         const periodDefinitions = {
             2024: [
-                { start: '2024-11-10', end: '2024-11-16', range: '11/10-11/16' },
+                { start: '2024-10-01', end: '2024-11-16', range: '10/01-11/16' },
                 { start: '2024-11-17', end: '2024-11-23', range: '11/17-11/23' },
                 { start: '2024-11-24', end: '2024-11-30', range: '11/24-11/30' },
                 { start: '2024-12-01', end: '2024-12-07', range: '12/01-12/07' },
@@ -237,7 +237,7 @@
                 { start: '2025-01-26', end: '2025-02-01', range: '01/26-02/01' },
             ],
             2025: [
-                { start: '2025-11-15', end: '2025-11-21', range: '11/15-11/21' },
+                { start: '2025-10-01', end: '2025-11-21', range: '10/01-11/21' },
                 { start: '2025-11-22', end: '2025-11-28', range: '11/22-11/28' },
                 { start: '2025-11-29', end: '2025-12-05', range: '11/29-12/05' },
                 { start: '2025-12-06', end: '2025-12-12', range: '12/06-12/12' },
@@ -257,6 +257,7 @@
         );
 
         const weekLabels = Array.from({ length: maxWeeks }, (_, idx) => {
+            if (idx === 0) return 'Week 1 & Before';
             return `Week ${idx + 1}`;
         });
 
@@ -422,12 +423,7 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: true },
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'end',
-                        color: '#e2e8f0',
-                        formatter: (value) => formatCurrency(value)
-                    }
+                    datalabels: { display: false }
                 }
             }
         });
@@ -489,12 +485,7 @@
                         fill: false,
                         yAxisID: 'y',
                         tension: 0.4,
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            color: '#e2e8f0',
-                            formatter: (value) => formatCurrency(value)
-                        }
+                        datalabels: { display: false }
                     },
                     {
                         label: 'Count 2024',
@@ -521,12 +512,7 @@
                         fill: false,
                         yAxisID: 'y',
                         tension: 0.4,
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            color: '#e2e8f0',
-                            formatter: (value) => formatCurrency(value)
-                        }
+                        datalabels: { display: false }
                     },
                     {
                         label: 'Count 2025',
