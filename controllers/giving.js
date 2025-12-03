@@ -392,8 +392,10 @@ const givingController = {
     }
 
     try {
-      const { inserted } = await givingModel.bulkInsertImported(records);
-      res.json({ inserted, skippedTapPay, errors });
+      const { inserted, deleted } = await givingModel.bulkInsertImported(
+        records
+      );
+      res.json({ inserted, deleted, skippedTapPay, errors });
     } catch (error) {
       console.error("Error importing Siyuan CSV:", error);
       res.status(500).json({ error: "Failed to import Siyuan CSV" });

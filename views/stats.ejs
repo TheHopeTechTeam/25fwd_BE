@@ -146,7 +146,7 @@
                 </button>
             </div>
             <p id="upload-feedback" class="text-sm text-slate-500 dark:text-slate-400">
-                Select the Siyuan CSV to import giving records. Rows with “Tappay” notes are skipped.
+                Select the Siyuan CSV to import giving records. Rows with “Tappay” notes are skipped and any previous Siyuan uploads are replaced.
             </p>
         </div>
     </div>
@@ -517,11 +517,11 @@
                     throw new Error(payload.error || '匯入失敗');
                 }
 
-                const { inserted = 0, skippedTapPay = 0, errors = [] } = payload;
+                const { inserted = 0, deleted = 0, skippedTapPay = 0, errors = [] } = payload;
                 const errorDetails = errors.slice(0, 3).map((e) => `#${e.line}: ${e.reason}`).join('；');
                 const detailSuffix = errorDetails ? `，${errorDetails}` : '';
 
-                setUploadStatus(`匯入完成：新增 ${inserted} 筆，跳過 ${skippedTapPay} 筆 Tappay 備註${errors.length ? `，${errors.length} 筆失敗` : ''}${detailSuffix}。即將重新整理...`);
+                setUploadStatus(`匯入完成：刪除 ${deleted} 筆舊資料，新增 ${inserted} 筆，跳過 ${skippedTapPay} 筆 Tappay 備註${errors.length ? `，${errors.length} 筆失敗` : ''}${detailSuffix}。即將重新整理...`);
                 setTimeout(() => window.location.reload(), 1000);
             } catch (error) {
                 setUploadStatus(error.message || '匯入失敗', true);

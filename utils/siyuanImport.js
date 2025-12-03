@@ -136,7 +136,10 @@ function parseSiyuanCsv(csvText, importEnv = "production") {
 
     const siyuanId = (cells[1] || "").trim();
     if (!siyuanId) {
-      errors.push({ line: csvRowNumber, reason: "Missing siyuan_id" });
+      errors.push({
+        line: csvRowNumber,
+        reason: "Missing or invalid siyuan_id",
+      });
       return;
     }
 

@@ -101,7 +101,7 @@ Key columns inside `public.confgive`:
 - `phone_number`, `email`, `receipt` (bool), `paymenttype`, `upload`
 - Receipt metadata: `receiptname`, `nationalid`, `company`, `taxid`, `note`, `campus`
 - TapPay metadata: `tp_trade_id`, `is_success` (bool), `env` (`sandbox` or `production`), `created_at`
-- Siyuan import metadata: `imported` (bool, defaults to false for native payments) and `siyuan_id` (string identifier from Siyuan)
+- Siyuan import metadata: `imported` (bool, defaults to false for native payments) and `siyuan_id` (text identifier from Siyuan)
 
 Manual migration helper when you see `column "is_success" does not exist`:
 ```sql
@@ -141,16 +141,17 @@ Rerun `schema.sql` afterwards to catch any other drift and keep the index (`conf
 - `POST /upload-siyuan`
   - Body: `{ csvText }` where `csvText` is the raw CSV contents from Siyuan (sent automatically from the dashboard upload button).
   - Auth: Same Basic Auth password as `/stats`.
-  - Behavior: Parses Siyuan donations (see rules below), skips rows whose notes contain `Tappay`, and bulk-inserts them with `imported = true`, `siyuan_id` set from column B, `env` derived from `TAPPAY_API` (sandbox vs production), and `tp_trade_id` of the form `siyuan-<id>`.
+  - Behavior: Parses Siyuan donations (see rules below), skips rows whose notes contain `Tappay`, wipes prior `upload = 'siyuan_csv'` rows, then bulk-inserts the new set with `imported = true`, `siyuan_id` set from column B, `env` derived from `TAPPAY_API` (sandbox vs production), and `tp_trade_id` of the form `siyuan-<id>`.
 - `GET /stats`
   - Headers: Set `Authorization: Basic base64(:<STATS_PASSWORD>)` (username is ignored; send an empty string before the colon).
   - Behavior: Renders the Tailwind dashboard defined in `views/stats.ejs`, pulling production rows with `amount > 1` via `givingModel.get(0)`. Client-side charts cover by-campus bar charts, weekly trendlines, and a “Past 7 Days” daily sum block (Taipei time, today included).
 
 ### Siyuan CSV import rules
 - Columns expected (A → I): ignore donation sequence, `siyuan_id` (B), ignore C and E, campus (D), amount (F), order time (G), payment method (H), note (I).
+- `siyuan_id` must be present (text); duplicates inside the same upload are rejected.
 - Campus normalization: `台北分部 Taipei Campus` → `台北分部`; `台中分部 Taichung Campus` → `台中分部`; `線上分部 Online Campus (Hope Nation)` → `線上分部`; everything else → `其他`.
 - Rows with notes containing “Tappay” (case-insensitive) are dropped.
-- Order time is parsed as Taipei time `YYYY/MM/DD HH:mm[:ss]` and stored as `TIMESTAMPTZ` (e.g., `2025-11-11 08:07:18+00`).
+- Order time is parsed as Taipei time `YYYY/MM/DD HH:mm[:ss]` and stored as `TIMESTAMPTZ` (e.g., `2025-11-11 08:07:18+00`). Each upload fully replaces prior Siyuan imports (rows with `upload = 'siyuan_csv'`).
 
 ## Troubleshooting
 - **`column "is_success" of relation "confgive" does not exist`** – The code inserts into `is_success`, but your table predates the column. Add the column manually using the SQL snippet above or drop/recreate the table via `schema.sql`.

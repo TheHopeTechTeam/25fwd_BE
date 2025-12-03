@@ -114,14 +114,21 @@ const givingModel = {
 
     const client = await pool.connect();
     let inserted = 0;
+    let deleted = 0;
     try {
       await client.query("BEGIN");
+      const deleteResult = await client.query(
+        "DELETE FROM confgive WHERE upload = $1",
+        ["siyuan_csv"]
+      );
+      deleted = deleteResult.rowCount || 0;
+
       for (const record of records) {
         await client.query(INSERT_QUERY, buildInsertParams(record));
         inserted += 1;
       }
       await client.query("COMMIT");
-      return { inserted };
+      return { inserted, deleted };
     } catch (err) {
       await client.query("ROLLBACK");
       console.error(
