@@ -57,16 +57,33 @@
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div
-                        class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
-                        <p class="text-slate-600 dark:text-slate-300 text-base font-medium leading-normal">Total Giving
-                        </p>
-                        <p class="tracking-tight text-4xl font-bold leading-tight" id="total-giving">$0</p>
+                        class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-slate-600 dark:text-slate-300 text-base font-medium leading-normal">Total Giving</p>
+                        <div class="flex flex-col gap-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">2024</p>
+                                <p class="tracking-tight text-3xl font-bold leading-tight" id="total-giving-2024">$0</p>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">2025</p>
+                                <p class="tracking-tight text-3xl font-bold leading-tight" id="total-giving-2025">$0</p>
+                            </div>
+                        </div>
                     </div>
                     <div
-                        class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        class="flex flex-col gap-3 rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
                         <p class="text-slate-600 dark:text-slate-300 text-base font-medium leading-normal">Total Giving Counts
                         </p>
-                        <p class="tracking-tight text-4xl font-bold leading-tight" id="total-count">0</p>
+                        <div class="flex flex-col gap-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">2024</p>
+                                <p class="tracking-tight text-3xl font-bold leading-tight" id="total-count-2024">0</p>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">2025</p>
+                                <p class="tracking-tight text-3xl font-bold leading-tight" id="total-count-2025">0</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -93,7 +110,8 @@
                     <div
                         class="rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
                         <p class="text-lg font-bold mb-1">Weekly Giving Trend</p>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">Nov 2025 - Jan 2026</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-1">2024 Week 1: 11/10</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">2025 Week 1: 11/15</p>
                         <div class="h-80 w-full">
                             <canvas id="weeklyTrendChart"></canvas>
                         </div>
@@ -107,8 +125,10 @@
                                 class="bg-slate-50 dark:bg-slate-800 text-xs text-slate-500 dark:text-slate-400 uppercase">
                                 <tr>
                                     <th class="px-6 py-3" scope="col">Week Period</th>
-                                    <th class="px-6 py-3 text-right" scope="col">Giving Amount</th>
-                                    <th class="px-6 py-3 text-right" scope="col">Giving Count</th>
+                                    <th class="px-6 py-3 text-right" scope="col">Amount 2024</th>
+                                    <th class="px-6 py-3 text-right" scope="col">Amount 2025</th>
+                                    <th class="px-6 py-3 text-right" scope="col">Count 2024</th>
+                                    <th class="px-6 py-3 text-right" scope="col">Count 2025</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm text-slate-700 dark:text-slate-300" id="period-table-body">
@@ -190,6 +210,62 @@
             return Date.UTC(year, month - 1, day);
         };
 
+        const getYearBucket = (dateStr) => {
+            if (!dateStr) return null;
+            const dateOnly = String(dateStr).slice(0, 10);
+            const [year, month, day] = dateOnly.split('-').map(Number);
+            if ([year, month, day].some(v => Number.isNaN(v))) return null;
+            if (year === 2025 && month === 1) return 2024; // Jan 2025 counts toward 2024 season
+            if (year === 2025 && month === 2 && day === 1) return 2024; // Feb 1, 2025 stays with 2024 season
+            if (year === 2026 && month === 1) return 2025; // Jan 2026 counts toward 2025 season
+            return year;
+        };
+
+        const periodDefinitions = {
+            2024: [
+                { start: '2024-11-10', end: '2024-11-16', range: '11/10-11/16' },
+                { start: '2024-11-17', end: '2024-11-23', range: '11/17-11/23' },
+                { start: '2024-11-24', end: '2024-11-30', range: '11/24-11/30' },
+                { start: '2024-12-01', end: '2024-12-07', range: '12/01-12/07' },
+                { start: '2024-12-08', end: '2024-12-14', range: '12/08-12/14' },
+                { start: '2024-12-15', end: '2024-12-21', range: '12/15-12/21' },
+                { start: '2024-12-22', end: '2024-12-28', range: '12/22-12/28' },
+                { start: '2024-12-29', end: '2025-01-04', range: '12/29-01/04' },
+                { start: '2025-01-05', end: '2025-01-11', range: '01/05-01/11' },
+                { start: '2025-01-12', end: '2025-01-18', range: '01/12-01/18' },
+                { start: '2025-01-19', end: '2025-01-25', range: '01/19-01/25' },
+                { start: '2025-01-26', end: '2025-02-01', range: '01/26-02/01' },
+            ],
+            2025: [
+                { start: '2025-11-15', end: '2025-11-21', range: '11/15-11/21' },
+                { start: '2025-11-22', end: '2025-11-28', range: '11/22-11/28' },
+                { start: '2025-11-29', end: '2025-12-05', range: '11/29-12/05' },
+                { start: '2025-12-06', end: '2025-12-12', range: '12/06-12/12' },
+                { start: '2025-12-13', end: '2025-12-19', range: '12/13-12/19' },
+                { start: '2025-12-20', end: '2025-12-26', range: '12/20-12/26' },
+                { start: '2025-12-27', end: '2026-01-02', range: '12/27-01/02' },
+                { start: '2026-01-03', end: '2026-01-09', range: '01/03-01/09' },
+                { start: '2026-01-10', end: '2026-01-16', range: '01/10-01/16' },
+                { start: '2026-01-17', end: '2026-01-23', range: '01/17-01/23' },
+                { start: '2026-01-24', end: '2026-01-31', range: '01/24-01/31' },
+            ],
+        };
+
+        const maxWeeks = Math.max(
+            periodDefinitions[2024].length,
+            periodDefinitions[2025].length
+        );
+
+        const weekLabels = Array.from({ length: maxWeeks }, (_, idx) => {
+            return `Week ${idx + 1}`;
+        });
+
+        const findWeekIndex = (year, dateOnly) => {
+            const defs = periodDefinitions[year];
+            if (!defs) return -1;
+            return defs.findIndex(({ start, end }) => dateOnly >= start && dateOnly <= end);
+        };
+
         const todayTaipeiMs = getTaipeiMidnightMs(new Date());
         const pastSevenDays = Array.from({ length: 7 }, (_, index) => {
             const ts = todayTaipeiMs - index * DAY_MS;
@@ -237,63 +313,57 @@
         };
 
         // Process Data
-        let totalGiving = 0;
-        let totalCount = 0;
+        let totalGiving2024 = 0;
+        let totalGiving2025 = 0;
+        let totalCount2024 = 0;
+        let totalCount2025 = 0;
         const campusOrder = ['台北分部', '台中分部', '線上分部', '其他'];
-        const campusSum = campusOrder.reduce((acc, campus) => {
+        const buildCampusBucket = () => campusOrder.reduce((acc, campus) => {
             acc[campus] = 0;
             return acc;
         }, {});
-        const campusCount = campusOrder.reduce((acc, campus) => {
-            acc[campus] = 0;
-            return acc;
-        }, {});
-        const periodSum = {
-            'Before 11/23': 0,
-            '11/24 ~ 11/30': 0,
-            '12/01 ~ 12/07': 0,
-            '12/08 ~ 12/14': 0,
-            '12/15 ~ 12/21': 0,
-            '12/22 ~ 12/28': 0,
-            '12/29 ~ 01/04': 0
+        const campusSum2024 = buildCampusBucket();
+        const campusSum2025 = buildCampusBucket();
+        const campusCount2024 = buildCampusBucket();
+        const campusCount2025 = buildCampusBucket();
+        const makeWeekArray = () => Array.from({ length: maxWeeks }, () => 0);
+        const weeklySum = {
+            2024: makeWeekArray(),
+            2025: makeWeekArray(),
         };
-        const periodCount = {
-            'Before 11/23': 0,
-            '11/24 ~ 11/30': 0,
-            '12/01 ~ 12/07': 0,
-            '12/08 ~ 12/14': 0,
-            '12/15 ~ 12/21': 0,
-            '12/22 ~ 12/28': 0,
-            '12/29 ~ 01/04': 0
+        const weeklyCount = {
+            2024: makeWeekArray(),
+            2025: makeWeekArray(),
         };
-
-        // Ordered keys for charts/tables
-        const periodKeys = [
-            'Before 11/23',
-            '11/24 ~ 11/30',
-            '12/01 ~ 12/07',
-            '12/08 ~ 12/14',
-            '12/15 ~ 12/21',
-            '12/22 ~ 12/28',
-            '12/29 ~ 01/04'
-        ];
 
         rawData.forEach(item => {
             const amount = Number(item.amount) || 0;
-            totalGiving += amount;
-            totalCount += 1;
+            const year = getYearBucket(item.date);
+            const dateOnly = String(item.date).slice(0, 10);
+            if (year === 2024) {
+                totalGiving2024 += amount;
+                totalCount2024 += 1;
+            } else if (year === 2025) {
+                totalGiving2025 += amount;
+                totalCount2025 += 1;
+            }
 
             // Campus
             const campusValue = (item.campus || '').trim();
             const campus = campusOrder.includes(campusValue) ? campusValue : '其他';
-            campusSum[campus] = (campusSum[campus] || 0) + amount;
-            campusCount[campus] = (campusCount[campus] || 0) + 1;
+            if (year === 2024) {
+                campusSum2024[campus] = (campusSum2024[campus] || 0) + amount;
+                campusCount2024[campus] = (campusCount2024[campus] || 0) + 1;
+            } else if (year === 2025) {
+                campusSum2025[campus] = (campusSum2025[campus] || 0) + amount;
+                campusCount2025[campus] = (campusCount2025[campus] || 0) + 1;
+            }
 
-            // Period
-            const p = getPeriod(item.date);
-            if (periodSum.hasOwnProperty(p)) {
-                periodSum[p] += amount;
-                periodCount[p] += 1;
+            // Weekly period buckets
+            const weekIndex = findWeekIndex(year, dateOnly);
+            if (weekIndex >= 0) {
+                weeklySum[year][weekIndex] += amount;
+                weeklyCount[year][weekIndex] += 1;
             }
 
             // Past 7 days (Taipei)
@@ -308,8 +378,10 @@
         });
 
         // Update DOM
-        document.getElementById('total-giving').textContent = formatCurrency(totalGiving);
-        document.getElementById('total-count').textContent = totalCount.toLocaleString();
+        document.getElementById('total-giving-2024').textContent = formatCurrency(totalGiving2024);
+        document.getElementById('total-giving-2025').textContent = formatCurrency(totalGiving2025);
+        document.getElementById('total-count-2024').textContent = totalCount2024.toLocaleString();
+        document.getElementById('total-count-2025').textContent = totalCount2025.toLocaleString();
 
         // Charts Configuration
         Chart.defaults.color = '#94a3b8';
@@ -320,26 +392,36 @@
 
         // Campus Charts
         const campusLabels = campusOrder;
-        const campusSumData = campusLabels.map(l => campusSum[l] || 0);
-        const campusCountData = campusLabels.map(l => campusCount[l] || 0);
+        const campusSum2024Data = campusLabels.map(l => campusSum2024[l] || 0);
+        const campusSum2025Data = campusLabels.map(l => campusSum2025[l] || 0);
+        const campusCount2024Data = campusLabels.map(l => campusCount2024[l] || 0);
+        const campusCount2025Data = campusLabels.map(l => campusCount2025[l] || 0);
 
         new Chart(document.getElementById('campusSumChart'), {
             type: 'bar',
             data: {
                 labels: campusLabels,
-                datasets: [{
-                    label: 'Giving Sum',
-                    data: campusSumData,
-                    backgroundColor: '#4A90E2',
-                    borderRadius: 4
-                }]
+                datasets: [
+                    {
+                        label: '2024',
+                        data: campusSum2024Data,
+                        backgroundColor: '#cbd5e1', // light gray
+                        borderRadius: 4
+                    },
+                    {
+                        label: '2025',
+                        data: campusSum2025Data,
+                        backgroundColor: '#4A90E2',
+                        borderRadius: 4
+                    }
+                ]
             },
             options: {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: { display: true },
                     datalabels: {
                         anchor: 'end',
                         align: 'end',
@@ -354,19 +436,27 @@
             type: 'bar',
             data: {
                 labels: campusLabels,
-                datasets: [{
-                    label: 'Giving Count',
-                    data: campusCountData,
-                    backgroundColor: '#4A90E2',
-                    borderRadius: 4
-                }]
+                datasets: [
+                    {
+                        label: '2024',
+                        data: campusCount2024Data,
+                        backgroundColor: '#cbd5e1',
+                        borderRadius: 4
+                    },
+                    {
+                        label: '2025',
+                        data: campusCount2025Data,
+                        backgroundColor: '#4A90E2',
+                        borderRadius: 4
+                    }
+                ]
             },
             options: {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: { display: true },
                     datalabels: {
                         anchor: 'end',
                         align: 'end',
@@ -378,20 +468,25 @@
         });
 
         // Weekly Trend Chart
-        const periodSumData = periodKeys.map(k => periodSum[k]);
-        const periodCountData = periodKeys.map(k => periodCount[k]);
+        const periodSumData2024 = weeklySum[2024];
+        const periodSumData2025 = weeklySum[2025];
+        const periodCountData2024 = weeklyCount[2024];
+        const periodCountData2025 = weeklyCount[2025];
+        const periodRanges2024 = Array.from({ length: maxWeeks }, (_, idx) => periodDefinitions[2024][idx]?.range || '-');
+        const periodRanges2025 = Array.from({ length: maxWeeks }, (_, idx) => periodDefinitions[2025][idx]?.range || '-');
 
         new Chart(document.getElementById('weeklyTrendChart'), {
             type: 'line',
             data: {
-                labels: periodKeys,
+                labels: weekLabels,
                 datasets: [
                     {
-                        label: 'Giving Amount',
-                        data: periodSumData,
-                        borderColor: '#4A90E2',
-                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
-                        fill: true,
+                        label: 'Amount 2024',
+                        data: periodSumData2024,
+                        borderColor: '#cbd5e1',
+                        backgroundColor: 'transparent',
+                        ranges: periodRanges2024,
+                        fill: false,
                         yAxisID: 'y',
                         tension: 0.4,
                         datalabels: {
@@ -402,13 +497,46 @@
                         }
                     },
                     {
-                        label: 'Giving Count',
-                        data: periodCountData,
-                        borderColor: '#10B981', // Green
+                        label: 'Count 2024',
+                        data: periodCountData2024,
+                        borderColor: '#94a3b8',
+                        ranges: periodRanges2024,
                         backgroundColor: 'transparent',
                         yAxisID: 'y1',
                         tension: 0.4,
                         borderDash: [5, 5],
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'bottom',
+                            color: '#cbd5e1',
+                            formatter: (value) => value.toLocaleString()
+                        }
+                    },
+                    {
+                        label: 'Amount 2025',
+                        data: periodSumData2025,
+                        borderColor: '#4A90E2',
+                        backgroundColor: 'transparent',
+                        ranges: periodRanges2025,
+                        fill: false,
+                        yAxisID: 'y',
+                        tension: 0.4,
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#e2e8f0',
+                            formatter: (value) => formatCurrency(value)
+                        }
+                    },
+                    {
+                        label: 'Count 2025',
+                        data: periodCountData2025,
+                        borderColor: '#4A90E2',
+                        ranges: periodRanges2025,
+                        backgroundColor: 'transparent',
+                        yAxisID: 'y1',
+                        tension: 0.4,
+                        borderDash: [6, 6],
                         datalabels: {
                             anchor: 'end',
                             align: 'bottom',
@@ -426,6 +554,18 @@
                     intersect: false,
                 },
                 plugins: {
+                    legend: { display: true },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const datasetLabel = context.dataset.label || '';
+                                const value = context.formattedValue;
+                                const range = context.dataset.ranges?.[context.dataIndex];
+                                const rangeSuffix = range && range !== '-' ? ` (${range})` : '';
+                                return `${datasetLabel}: ${value}${rangeSuffix}`;
+                            }
+                        }
+                    },
                     datalabels: {
                         clip: true
                     }
@@ -450,13 +590,15 @@
 
         // Populate Table
         const tableBody = document.getElementById('period-table-body');
-        periodKeys.forEach(key => {
+        weekLabels.forEach((key, idx) => {
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-200 dark:border-slate-700";
             tr.innerHTML = `
                 <td class="px-6 py-4 font-medium">${key}</td>
-                <td class="px-6 py-4 text-right">${formatCurrency(periodSum[key])}</td>
-                <td class="px-6 py-4 text-right">${periodCount[key]}</td>
+                <td class="px-6 py-4 text-right">${formatCurrency(periodSumData2024[idx])}</td>
+                <td class="px-6 py-4 text-right">${formatCurrency(periodSumData2025[idx])}</td>
+                <td class="px-6 py-4 text-right">${periodCountData2024[idx]}</td>
+                <td class="px-6 py-4 text-right">${periodCountData2025[idx]}</td>
             `;
             tableBody.appendChild(tr);
         });
