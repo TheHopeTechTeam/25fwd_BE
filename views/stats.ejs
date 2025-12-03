@@ -148,6 +148,29 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="grid grid-cols-1 gap-8 mt-8">
+                    <div
+                        class="rounded-xl p-6 bg-white dark:bg-[#192734] border border-slate-200 dark:border-slate-700">
+                        <p class="text-lg font-bold mb-1">2025 Payment Method Stats</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-normal mb-4">思遠 vs TapPay</p>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                            <div class="lg:col-span-2 h-72">
+                                <canvas id="uploadMixChart"></canvas>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
+                                    <p class="text-slate-500 dark:text-slate-400">思遠</p>
+                                    <p class="text-2xl font-bold" id="siyuan-upload-count">0</p>
+                                </div>
+                                <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
+                                    <p class="text-slate-500 dark:text-slate-400">TapPay</p>
+                                    <p class="text-2xl font-bold" id="native-upload-count">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -325,6 +348,8 @@
         const campusSum2025 = buildCampusBucket();
         const campusCount2024 = buildCampusBucket();
         const campusCount2025 = buildCampusBucket();
+        let siyuanCsv2025Count = 0;
+        let nativeUpload2025Count = 0;
         const makeWeekArray = () => Array.from({ length: maxWeeks }, () => 0);
         const weeklySum = {
             2024: makeWeekArray(),
@@ -345,6 +370,14 @@
             } else if (year === 2025) {
                 totalGiving2025 += amount;
                 totalCount2025 += 1;
+                if (item.upload === 'siyuan_csv') {
+                    siyuanCsv2025Count += 1;
+                } else {
+                    const tradeId = (item.tp_trade_id || '').toString().toLowerCase();
+                    if (!tradeId.includes('siyuan')) {
+                        nativeUpload2025Count += 1;
+                    }
+                }
             }
 
             // Campus
@@ -460,6 +493,42 @@
                 }
             }
         });
+
+        // Siyuan vs Native Upload Mix (2025)
+        const uploadMixChartEl = document.getElementById('uploadMixChart');
+        if (uploadMixChartEl) {
+            const uploadMixData = [siyuanCsv2025Count, nativeUpload2025Count];
+            new Chart(uploadMixChartEl, {
+                type: 'doughnut',
+                data: {
+                    labels: ['思遠', 'TapPay'],
+                    datasets: [
+                        {
+                            data: uploadMixData,
+                            backgroundColor: ['#4A90E2', '#cbd5e1'],
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.parsed;
+                                    const total = uploadMixData.reduce((acc, v) => acc + v, 0) || 1;
+                                    const pct = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: ${value.toLocaleString()} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
         // Weekly Trend Chart
         const periodSumData2024 = weeklySum[2024];
@@ -586,6 +655,12 @@
             `;
             tableBody.appendChild(tr);
         });
+
+        // Upload mix counts display
+        const siyuanCountEl = document.getElementById('siyuan-upload-count');
+        const nativeCountEl = document.getElementById('native-upload-count');
+        if (siyuanCountEl) siyuanCountEl.textContent = siyuanCsv2025Count.toLocaleString();
+        if (nativeCountEl) nativeCountEl.textContent = nativeUpload2025Count.toLocaleString();
 
         // Past 7 Days cards
         const recentDailyContainer = document.getElementById('recent-daily-cards');
