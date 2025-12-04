@@ -31,7 +31,7 @@ CREATE INDEX IF NOT EXISTS confgive_tp_trade_id_idx ON public.confgive (tp_trade
 ALTER TABLE public.confgive
   ADD COLUMN IF NOT EXISTS campus TEXT,
   ADD COLUMN IF NOT EXISTS imported BOOLEAN NOT NULL DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS siyuan_id TEXT,
+  ADD COLUMN IF NOT EXISTS siyuan_id TEXT, -- text identifier from Siyuan, it is TEXT and NOT INTEGER
   ALTER COLUMN "date" TYPE TIMESTAMPTZ USING "date"::timestamptz;
 
 COMMIT;
